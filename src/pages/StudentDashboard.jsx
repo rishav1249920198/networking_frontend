@@ -186,7 +186,7 @@ export default function StudentDashboard() {
     <div style={{ display: 'flex', minHeight: '100vh', background: '#F0F4FF' }}>
       <Sidebar active={active} setActive={setActive} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-      <main style={{ marginLeft: '260px', flex: 1, padding: '0', minWidth: 0 }}>
+      <main className="main-content">
         {/* Top bar */}
         <div style={{ background: 'white', borderBottom: '1px solid rgba(10,36,99,0.08)', padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', position: 'sticky', top: 0, zIndex: 30 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>

@@ -62,7 +62,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right Panel - Form */}
-      <div style={{ flex: '0 0 480px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', background: 'white' }}>
+      <div style={{ flex: '1 1 480px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', background: 'white', maxWidth: '100%' }}>
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} style={{ width: '100%', maxWidth: '400px' }}>
           {/* Mobile logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>

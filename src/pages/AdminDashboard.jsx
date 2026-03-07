@@ -170,7 +170,7 @@ export default function AdminDashboard() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#F0F4FF' }}>
       {/* Sidebar */}
-      <aside style={{ width: '240px', background: 'linear-gradient(180deg, #0A2463, #061647)', position: 'fixed', top: 0, left: 0, height: '100vh', display: 'flex', flexDirection: 'column', zIndex: 50 }}>
+      <aside className="sidebar">
         <div style={{ padding: '1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -201,7 +201,7 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
-      <main style={{ marginLeft: '240px', flex: 1, padding: '1.5rem', minWidth: 0 }}>
+      <main className="main-content" style={{ padding: '1.5rem' }}>
         {/* Top bar */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <div>

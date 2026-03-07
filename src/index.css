@@ -408,7 +408,21 @@ body {
 .pulse-glow { animation: pulseGlow 2s ease-in-out infinite; }
 
 /* Responsive */
+.main-content {
+  margin-left: 260px;
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  transition: margin-left 0.3s;
+}
+
 @media (max-width: 768px) {
-  .sidebar { transform: translateX(-100%); }
+  .sidebar { transform: translateX(-100%); width: 260px !important; }
   .sidebar.open { transform: translateX(0); }
+  .main-content { margin-left: 0 !important; width: 100%; }
+  .stat-card { padding: 1rem; }
+  .data-table th, .data-table td { padding: 0.75rem 0.5rem; font-size: 0.75rem; }
+  .hidden-mobile { display: none !important; }
 }
