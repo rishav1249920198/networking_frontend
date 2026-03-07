@@ -26,7 +26,7 @@ export default function PublicAdmissionPage() {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const res = await api.get('/courses');
+        const res = await api.get('/courses/public');
         setCourses(res.data.data || []);
       } catch (err) {
         console.error(err);
