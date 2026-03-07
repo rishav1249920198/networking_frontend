@@ -400,23 +400,23 @@ export default function StudentDashboard() {
                   </div>
                   <div style={{ overflowX: 'auto' }}>
                     <table className="data-table">
-                    <thead>
-                      <tr><th>Course</th><th>Fee</th><th>Status</th><th>Mode</th><th>Date</th></tr>
-                    </thead>
-                    <tbody>
-                      {admissions.length === 0 ? (
-                        <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>No admissions found.</td></tr>
-                      ) : admissions.map(a => (
-                        <tr key={a.id}>
-                          <td style={{ fontWeight: '600', color: '#0A2463' }}>{a.course_name}</td>
-                          <td>₹{parseFloat(a.snapshot_fee).toLocaleString()}</td>
-                          <td>{getStatusBadge(a.status)}</td>
-                          <td><span className="badge badge-info">{a.admission_mode}</span></td>
-                          <td style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{new Date(a.created_at).toLocaleDateString()}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      <thead>
+                        <tr><th>Course</th><th>Fee</th><th>Status</th><th>Mode</th><th>Date</th></tr>
+                      </thead>
+                      <tbody>
+                        {admissions.length === 0 ? (
+                          <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>No admissions found.</td></tr>
+                        ) : admissions.map(a => (
+                          <tr key={a.id}>
+                            <td style={{ fontWeight: '600', color: '#0A2463' }}>{a.course_name}</td>
+                            <td>₹{parseFloat(a.snapshot_fee).toLocaleString()}</td>
+                            <td>{getStatusBadge(a.status)}</td>
+                            <td><span className="badge badge-info">{a.admission_mode || 'offline'}</span></td>
+                            <td style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{new Date(a.created_at).toLocaleDateString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </motion.div>
               )}

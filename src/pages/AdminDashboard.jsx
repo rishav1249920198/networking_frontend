@@ -27,6 +27,7 @@ export default function AdminDashboard() {
   const [admissions, setAdmissions] = useState([]);
   const [courses, setCourses] = useState([]);
   const [users, setUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]); // Real users list (for management)
   const [pendingRefs, setPendingRefs] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,20 +39,29 @@ export default function AdminDashboard() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [dash, adm, crs, usr, refs, wds] = await Promise.all([
+      const isSuperOrAdmin = ['super_admin', 'admin'].includes(user?.role);
+      const reqs = [
         api.get('/dashboard/admin'),
         api.get('/admissions?limit=20'),
         api.get('/courses'),
         api.get('/users/students'),
         api.get('/users/pending-referrals'),
         api.get('/commissions/withdrawals?limit=50'),
-      ]);
-      setData(dash.data.data);
-      setAdmissions(adm.data.data || []);
-      setCourses(crs.data.data || []);
-      setUsers(usr.data.data || []);
-      setPendingRefs(refs.data.data || []);
-      setWithdrawals(wds.data.data || []);
+      ];
+      
+      if (isSuperOrAdmin) reqs.push(api.get('/users'));
+      
+      const responses = await Promise.all(reqs);
+      
+      setData(responses[0].data.data);
+      setAdmissions(responses[1].data.data || []);
+      setCourses(responses[2].data.data || []);
+      setUsers(responses[3].data.data || []);
+      setPendingRefs(responses[4].data.data || []);
+      setWithdrawals(responses[5].data.data || []);
+      if (isSuperOrAdmin && responses[6]) {
+        setAllUsers(responses[6].data.data || []);
+      }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
@@ -147,6 +157,28 @@ export default function AdminDashboard() {
     }
   };
 
+  const promoteDemoteUser = async (id, newRole) => {
+    if (!window.confirm(`Are you sure you want to change this user's role to ${newRole}?`)) return;
+    try {
+      await api.put(`/users/${id}/role`, { role: newRole });
+      toast.success(`User role updated to ${newRole}.`);
+      loadData();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update user role.');
+    }
+  };
+
+  const deleteUser = async (id, name) => {
+    if (!window.confirm(`WARNING: Are you absolutely sure you want to delete ${name}?\nThis action cannot be undone.`)) return;
+    try {
+      await api.delete(`/users/${id}`);
+      toast.success('User deleted successfully.');
+      loadData();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete user.');
+    }
+  };
+
   const getStatusBadge = (status) => {
     let style = 'badge-pending';
     if (status === 'approved' || status === 'paid') style = 'badge-success';
@@ -160,12 +192,16 @@ export default function AdminDashboard() {
 
   const links = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'students', label: 'Students', icon: Users },
+    { id: 'students', label: 'Referrals & Leads', icon: Users },
     { id: 'admissions', label: 'Admissions', icon: BookOpen },
     { id: 'withdrawals', label: 'Withdrawals', icon: IndianRupee },
     { id: 'courses', label: 'Courses', icon: Settings },
     { id: 'analytics', label: 'Analytics', icon: TrendingUp },
   ];
+
+  if (['super_admin', 'admin'].includes(user?.role)) {
+    links.push({ id: 'users', label: 'User Management', icon: Users });
+  }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#F0F4FF' }}>
@@ -466,6 +502,56 @@ export default function AdminDashboard() {
                           </tr>
                         ))
                       )}
+                    </tbody>
+                  </table>
+                </div>
+              </motion.div>
+            )}
+
+            {/* === USER MANAGEMENT === */}
+            {active === 'users' && ['super_admin', 'admin'].includes(user?.role) && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ background: 'white', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(10,36,99,0.06)' }}>
+                <h3 style={{ fontWeight: '700', color: '#0A2463', marginBottom: '1.25rem' }}>System User Management</h3>
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="data-table">
+                    <thead>
+                      <tr><th>Name / ID</th><th>Contact Info</th><th>Role</th><th>Joined On</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                      {allUsers.length === 0 ? (
+                        <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>No users found.</td></tr>
+                      ) : allUsers.map(u => (
+                        <tr key={u.id}>
+                          <td>
+                            <div style={{ fontWeight: '600', color: '#0A2463', fontSize: '0.875rem' }}>{u.full_name}</div>
+                            <div style={{ fontFamily: 'monospace', color: '#64748b', fontSize: '0.75rem' }}>{u.system_id}</div>
+                          </td>
+                          <td>
+                            <div style={{ fontSize: '0.825rem', color: '#334155' }}>{u.mobile}</div>
+                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{u.email}</div>
+                          </td>
+                          <td>
+                            <span className={`badge ${u.role === 'co-admin' ? 'badge-info' : u.role === 'admin' || u.role === 'super_admin' ? 'badge-success' : 'badge-pending'}`} style={{ fontSize: '0.75rem' }}>
+                              {u.role}
+                            </span>
+                          </td>
+                          <td style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{new Date(u.created_at).toLocaleDateString()}</td>
+                          <td>
+                            {/* Actions purely for student <-> co-admin flipping and student deletion */}
+                            {['student', 'co-admin'].includes(u.role) && (
+                              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                {u.role === 'student' ? (
+                                  <button onClick={() => promoteDemoteUser(u.id, 'co-admin')} className="btn-success" style={{ padding: '0.4rem 0.6rem', fontSize: '0.7rem' }}>🚀 Promote</button>
+                                ) : (
+                                  <button onClick={() => promoteDemoteUser(u.id, 'student')} className="btn-outline" style={{ padding: '0.4rem 0.6rem', fontSize: '0.7rem' }}>⬇️ Demote</button>
+                                )}
+                                <button onClick={() => deleteUser(u.id, u.full_name)} className="btn-danger" style={{ padding: '0.4rem 0.6rem', fontSize: '0.7rem' }}>🗑 Delete</button>
+                              </div>
+                            )}
+                            {!['student', 'co-admin'].includes(u.role) && <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>Protected Core User</span>}
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>

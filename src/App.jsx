@@ -11,6 +11,7 @@ const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 const StudentDashboard = lazy(() => import('./pages/StudentDashboard'));
 const StaffDashboard = lazy(() => import('./pages/StaffDashboard'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const PublicAdmissionPage = lazy(() => import('./pages/PublicAdmissionPage'));
 
 const ProtectedRoute = ({ children, roles }) => {
   const { isAuthenticated, hasRole } = useAuth();
@@ -24,7 +25,7 @@ const DashboardRouter = () => {
   if (!user) return <Navigate to="/login" replace />;
   if (user.role === 'student') return <Navigate to="/dashboard/student" replace />;
   if (user.role === 'staff') return <Navigate to="/dashboard/staff" replace />;
-  if (user.role === 'centre_admin' || user.role === 'super_admin') return <Navigate to="/dashboard/admin" replace />;
+  if (['centre_admin', 'super_admin', 'admin', 'co-admin'].includes(user.role)) return <Navigate to="/dashboard/admin" replace />;
   return <Navigate to="/" replace />;
 };
 
@@ -36,6 +37,7 @@ function App() {
         <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--bg)' }}><div className="spinner" style={{ borderColor: 'rgba(10,36,99,0.3)', borderTopColor: 'var(--primary)', width: '40px', height: '40px', borderWidth: '4px' }}></div></div>}>
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/admission" element={<PublicAdmissionPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -47,7 +49,7 @@ function App() {
               <ProtectedRoute roles={['staff']}><StaffDashboard /></ProtectedRoute>
             } />
             <Route path="/dashboard/admin" element={
-              <ProtectedRoute roles={['centre_admin', 'super_admin']}><AdminDashboard /></ProtectedRoute>
+              <ProtectedRoute roles={['centre_admin', 'super_admin', 'admin', 'co-admin']}><AdminDashboard /></ProtectedRoute>
             } />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
