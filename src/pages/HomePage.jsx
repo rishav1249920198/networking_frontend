@@ -92,11 +92,11 @@ export default function HomePage() {
               <Link to="/register" className="btn-accent" style={{ fontSize: '1rem', padding: '0.9rem 2rem' }}>
                 Get Started <ArrowRight size={18} />
               </Link>
-              <a href="#how-it-works" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.9rem 2rem', borderRadius: '12px', border: '2px solid rgba(255,255,255,0.35)', color: 'white', textDecoration: 'none', fontWeight: '600', fontSize: '1rem', transition: 'all 0.3s' }}
+              <Link to="/admission" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.9rem 2rem', borderRadius: '12px', border: '2px solid rgba(255,255,255,0.35)', color: 'white', textDecoration: 'none', fontWeight: '600', fontSize: '1rem', transition: 'all 0.3s' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                Learn More
-              </a>
+                Apply Admission
+              </Link>
             </motion.div>
 
             {/* Stats Row */}

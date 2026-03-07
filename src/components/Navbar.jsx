@@ -25,7 +25,7 @@ export default function Navbar() {
     { label: 'Home', href: '/' },
     { label: 'Courses', href: '#courses' },
     { label: 'How It Works', href: '#how-it-works' },
-    { label: 'About', href: '#about' },
+    { label: 'Apply Admission', href: '/admission' },
   ];
 
   return (
