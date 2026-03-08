@@ -57,7 +57,7 @@ export default function PublicAdmissionPage() {
       });
       setStep(2); // Go to OTP screen
     } catch (err) {
-      setErrorMsg(err.response?.data?.message || "OTP request failed");
+      setErrorMsg(err.response?.data?.message || "Failed to send OTP");
     } finally {
       setSubmitting(false);
     }
