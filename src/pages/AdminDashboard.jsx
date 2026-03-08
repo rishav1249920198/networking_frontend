@@ -330,7 +330,7 @@ export default function AdminDashboard() {
                 <div style={{ overflowX: 'auto' }}>
                   <table className="data-table">
                     <thead>
-                      <tr><th>Student</th><th>Course</th><th>Fee</th><th>Commission</th><th>Mode</th><th>Status</th><th>Date</th><th>Actions</th></tr>
+                      <tr><th>Student</th><th>Course</th><th>Fee</th><th>Referrer</th><th>Mode</th><th>Status</th><th>Date</th><th>Actions</th></tr>
                     </thead>
                     <tbody>
                       {admissions.map(a => (
@@ -341,7 +341,7 @@ export default function AdminDashboard() {
                           </td>
                           <td>{a.course_name}</td>
                           <td style={{ fontWeight: '600' }}>₹{parseFloat(a.snapshot_fee).toLocaleString()}</td>
-                          <td style={{ color: '#00B4D8' }}>{a.snapshot_commission_percent}%</td>
+                          <td style={{ color: '#00B4D8', fontSize: '0.8rem' }}>{a.referrer_name || '—'}</td>
                           <td><span className="badge badge-info">{a.admission_mode}</span></td>
                           <td><span className={`badge badge-${a.status}`}>{a.status}</span></td>
                           <td style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{new Date(a.created_at).toLocaleDateString()}</td>
