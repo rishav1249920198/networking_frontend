@@ -15,26 +15,22 @@ export default function HomePage() {
   const [courses, setCourses] = useState({ computer: [], university: [] });
 
   useEffect(() => {
-    api.get('/courses/public').then(res => {
+    // Prevent Vercel caching to ensure fresh DB courses are always fetched
+    api.get('/courses/public', {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    }).then(res => {
       const data = res.data.data || [];
       setCourses({
         computer: data.filter(c => c.category === 'computer'),
         university: data.filter(c => c.category === 'university'),
       });
-    }).catch(() => {
-      // Fallback static courses for display
-      setCourses({
-        computer: [
-          { id: '1', name: 'ADCA', description: 'Advanced Diploma in Computer Applications', fee: 8000, duration_months: 12 },
-          { id: '2', name: 'DCP', description: 'Diploma in Computer Programming', fee: 6500, duration_months: 6 },
-          { id: '3', name: 'DWD', description: 'Diploma in Web Development', fee: 9000, duration_months: 9 },
-        ],
-        university: [
-          { id: '4', name: 'BCA', description: 'Bachelor of Computer Applications', fee: 25000, duration_months: 36 },
-          { id: '5', name: 'BBA', description: 'Bachelor of Business Administration', fee: 22000, duration_months: 36 },
-          { id: '6', name: 'B.Sc (PCM)', description: 'Bachelor of Science – Physics, Chemistry, Math', fee: 20000, duration_months: 36 },
-        ],
-      });
+    }).catch(err => {
+      console.error('Failed to load courses:', err);
+      setCourses({ computer: [], university: [] });
     });
   }, []);
 
@@ -155,7 +151,7 @@ export default function HomePage() {
 
           <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true }}
             style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1.25rem' }}>
-            {courses.computer.map((c, i) => (
+            {courses.computer.length > 0 ? courses.computer.map((c, i) => (
               <motion.div key={c.id} variants={fadeUp}
                 style={{ background: 'white', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(10,36,99,0.08)', transition: 'all 0.3s', cursor: 'pointer' }}
                 whileHover={{ y: -6, boxShadow: '0 12px 30px rgba(10,36,99,0.12)' }}>
@@ -172,7 +168,12 @@ export default function HomePage() {
                   Learn More <ArrowRight size={14} />
                 </button>
               </motion.div>
-            ))}
+            )) : (
+              <div style={{ gridColumn: '1 / -1', padding: '3rem', textAlign: 'center', background: 'white', borderRadius: '16px', border: '1px solid rgba(10,36,99,0.08)', color: '#64748b' }}>
+                <Monitor size={32} style={{ margin: '0 auto 1rem', color: '#cbd5e1' }} />
+                <p style={{ fontSize: '1.1rem', fontWeight: '500' }}>No courses available currently.</p>
+              </div>
+            )}
           </motion.div>
 
           {/* University Programs */}
@@ -186,7 +187,7 @@ export default function HomePage() {
 
           <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true }}
             style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1.25rem' }}>
-            {courses.university.map((c, i) => (
+            {courses.university.length > 0 ? courses.university.map((c, i) => (
               <motion.div key={c.id} variants={fadeUp}
                 style={{ background: 'linear-gradient(135deg, #0A2463, #1a3a8f)', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(0,180,216,0.2)', cursor: 'pointer' }}
                 whileHover={{ y: -6, boxShadow: '0 12px 30px rgba(10,36,99,0.3)' }}>
@@ -203,7 +204,12 @@ export default function HomePage() {
                   Learn More <ArrowRight size={14} />
                 </button>
               </motion.div>
-            ))}
+            )) : (
+              <div style={{ gridColumn: '1 / -1', padding: '3rem', textAlign: 'center', background: 'linear-gradient(135deg, #0A2463, #1a3a8f)', borderRadius: '16px', border: '1px solid rgba(0,180,216,0.2)', color: 'rgba(255,255,255,0.7)' }}>
+                <GraduationCap size={32} style={{ margin: '0 auto 1rem', color: 'rgba(255,255,255,0.3)' }} />
+                <p style={{ fontSize: '1.1rem', fontWeight: '500' }}>No courses available currently.</p>
+              </div>
+            )}
           </motion.div>
         </div>
       </section>
