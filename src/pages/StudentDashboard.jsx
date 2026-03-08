@@ -88,6 +88,7 @@ export default function StudentDashboard() {
   const [copied, setCopied] = useState(false);
   const [withdrawModal, setWithdrawModal] = useState(false);
   const [withdrawForm, setWithdrawForm] = useState({ amount: '', upi_id: '' });
+  const [withdrawLoading, setWithdrawLoading] = useState(false);
   
   // Admission Modal State
   const [showAdmissionModal, setShowAdmissionModal] = useState(false);
@@ -530,12 +531,18 @@ export default function StudentDashboard() {
             </div>
             <form onSubmit={async (e) => {
               e.preventDefault();
+              setWithdrawLoading(true);
               try {
                 await api.post('/commissions/withdraw', withdrawForm);
                 setWithdrawModal(false);
-                alert('Withdrawal request submitted!');
+                setWithdrawForm({ amount: '', upi_id: '' });
+                const earnRes = await api.get('/commissions/summary');
+                setEarnings(earnRes.data.data);
+                toast.success('Withdrawal request submitted!');
               } catch (err) {
-                alert(err.response?.data?.message || 'Failed to submit request');
+                toast.error(err.response?.data?.message || 'Failed to submit request');
+              } finally {
+                setWithdrawLoading(false);
               }
             }}>
               <div style={{ marginBottom: '1rem' }}>
@@ -549,8 +556,10 @@ export default function StudentDashboard() {
                   value={withdrawForm.upi_id} onChange={e => setWithdrawForm({ ...withdrawForm, upi_id: e.target.value })} />
               </div>
               <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <button type="button" onClick={() => setWithdrawModal(false)} className="btn-outline" style={{ flex: 1, justifyContent: 'center' }}>Cancel</button>
-                <button type="submit" className="btn-primary" style={{ flex: 1, justifyContent: 'center' }}>Submit Request</button>
+                <button type="button" onClick={() => setWithdrawModal(false)} className="btn-outline" disabled={withdrawLoading} style={{ flex: 1, justifyContent: 'center' }}>Cancel</button>
+                <button type="submit" className="btn-primary" disabled={withdrawLoading} style={{ flex: 1, justifyContent: 'center' }}>
+                  {withdrawLoading ? 'Submitting...' : 'Submit Request'}
+                </button>
               </div>
             </form>
           </motion.div>
