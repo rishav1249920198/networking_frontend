@@ -196,10 +196,10 @@ export default function AdminDashboard() {
     { id: 'admissions', label: 'Admissions', icon: BookOpen },
     { id: 'withdrawals', label: 'Withdrawals', icon: IndianRupee },
     { id: 'courses', label: 'Courses', icon: Settings },
-    { id: 'analytics', label: 'Analytics', icon: TrendingUp },
   ];
 
   if (['super_admin', 'admin'].includes(user?.role)) {
+    links.push({ id: 'analytics', label: 'Analytics', icon: TrendingUp });
     links.push({ id: 'users', label: 'User Management', icon: Users });
   }
 
@@ -246,9 +246,16 @@ export default function AdminDashboard() {
             </h1>
             <p style={{ color: '#64748b', fontSize: '0.85rem' }}>IGCIM Administration Panel</p>
           </div>
-          <button onClick={loadData} disabled={loading} style={{ background: 'none', border: '1px solid rgba(10,36,99,0.12)', borderRadius: '10px', padding: '0.5rem', cursor: 'pointer', color: '#0A2463', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', opacity: loading ? 0.6 : 1 }}>
-            <RefreshCw size={14} className={loading ? 'spin' : ''} /> Refresh
-          </button>
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            {user?.role === 'co-admin' && (
+              <button onClick={() => window.location.href = '/dashboard/student'} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', fontSize: '0.8rem' }}>
+                👤 Student View
+              </button>
+            )}
+            <button onClick={loadData} disabled={loading} style={{ background: 'none', border: '1px solid rgba(10,36,99,0.12)', borderRadius: '10px', padding: '0.5rem', cursor: 'pointer', color: '#0A2463', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', opacity: loading ? 0.6 : 1 }}>
+              <RefreshCw size={14} className={loading ? 'spin' : ''} /> Refresh
+            </button>
+          </div>
         </div>
 
         {loading ? (

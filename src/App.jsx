@@ -43,7 +43,7 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/dashboard" element={<ProtectedRoute><DashboardRouter /></ProtectedRoute>} />
             <Route path="/dashboard/student" element={
-              <ProtectedRoute roles={['student']}><StudentDashboard /></ProtectedRoute>
+              <ProtectedRoute roles={['student', 'co-admin']}><StudentDashboard /></ProtectedRoute>
             } />
             <Route path="/dashboard/staff" element={
               <ProtectedRoute roles={['staff']}><StaffDashboard /></ProtectedRoute>

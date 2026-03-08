@@ -201,6 +201,11 @@ export default function StudentDashboard() {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            {user?.role === 'co-admin' && (
+              <button onClick={() => window.location.href = '/dashboard/admin'} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', fontSize: '0.8rem' }}>
+                🛡️ Admin View
+              </button>
+            )}
             <div style={{ background: '#F0F4FF', border: '1px solid rgba(10,36,99,0.1)', borderRadius: '10px', padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>Code:</span>
               <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0A2463' }}>{user?.referralCode}</span>
