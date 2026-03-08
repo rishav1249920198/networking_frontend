@@ -23,9 +23,9 @@ const ProtectedRoute = ({ children, roles }) => {
 const DashboardRouter = () => {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
-  if (user.role === 'student') return <Navigate to="/dashboard/student" replace />;
+  if (user.role === 'student' || user.role === 'co-admin') return <Navigate to="/dashboard/student" replace />;
   if (user.role === 'staff') return <Navigate to="/dashboard/staff" replace />;
-  if (['centre_admin', 'super_admin', 'admin', 'co-admin'].includes(user.role)) return <Navigate to="/dashboard/admin" replace />;
+  if (['centre_admin', 'super_admin', 'admin'].includes(user.role)) return <Navigate to="/dashboard/admin" replace />;
   return <Navigate to="/" replace />;
 };
 

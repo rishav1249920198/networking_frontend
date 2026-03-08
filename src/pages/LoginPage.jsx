@@ -18,7 +18,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const user = await login(form.email, form.password);
-      if (user.role === 'student') navigate('/dashboard/student');
+      if (user.role === 'student' || user.role === 'co-admin') navigate('/dashboard/student');
       else if (user.role === 'staff') navigate('/dashboard/staff');
       else navigate('/dashboard/admin');
     } catch (err) {
