@@ -8,8 +8,9 @@ export default function PublicAdmissionPage() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [step, setStep] = useState(1); // 1: Form, 2: OTP, 3: Success
   const [errorMsg, setErrorMsg] = useState('');
+  const [otp, setOtp] = useState('');
   
   const [form, setForm] = useState({
     student_name: '',
@@ -22,6 +23,12 @@ export default function PublicAdmissionPage() {
     payment_reference: '',
     payment_proof: null
   });
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setForm({ ...form, payment_proof: e.target.files[0] });
+    }
+  };
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -37,29 +44,49 @@ export default function PublicAdmissionPage() {
     fetchCourses();
   }, []);
 
-  const handleSubmit = async (e) => {
+  const handleSendOTP = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     setErrorMsg('');
     
-    const formData = new FormData();
-    Object.keys(form).forEach(key => {
-      if (form[key]) formData.append(key, form[key]);
-    });
-
     try {
-      await api.post('/admissions/public', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      await api.post('/admissions/send-otp', {
+          student_name: form.student_name,
+          student_email: form.student_email,
+          student_mobile: form.student_mobile
       });
-      setSuccess(true);
+      setStep(2); // Go to OTP screen
     } catch (err) {
-      setErrorMsg(err.response?.data?.message || 'Failed to submit admission request.');
+      setErrorMsg(err.response?.data?.message || 'Failed to send OTP.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (success) {
+  const handleVerifyAndSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setErrorMsg('');
+
+    const formData = new FormData();
+    Object.keys(form).forEach(key => {
+      if (form[key]) formData.append(key, form[key]);
+    });
+    formData.append('otp', otp);
+
+    try {
+      await api.post('/admissions/verify-and-admit', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setStep(3); // Success Screen
+    } catch(err) {
+      setErrorMsg(err.response?.data?.message || 'Invalid OTP or failed to submit.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (step === 3) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F0F4FF' }}>
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ background: 'white', padding: '3rem', borderRadius: '24px', textAlign: 'center', maxWidth: '400px', boxShadow: 'var(--shadow-lg)' }}>
@@ -67,10 +94,46 @@ export default function PublicAdmissionPage() {
             <CheckCircle size={32} />
           </div>
           <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0A2463', marginBottom: '1rem', fontFamily: 'Outfit' }}>Success!</h2>
-          <p style={{ color: '#64748b', marginBottom: '2rem' }}>Your admission request has been submitted successfully. Our team will contact you shortly.</p>
-          <Link to="/" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-flex' }}>Return to Home</Link>
+          <p style={{ color: '#64748b', marginBottom: '2rem' }}>Your admission has been successfully completed. Login details have been sent to your email.</p>
+          <Link to="/login" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-flex' }}>Login to Portal</Link>
         </motion.div>
       </div>
+    );
+  }
+
+  if (step === 2) {
+    return (
+        <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #F0F4FF 0%, #e2e8f0 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ background: 'white', padding: '3rem', borderRadius: '24px', width: '100%', maxWidth: '450px', boxShadow: 'var(--shadow-lg)', textAlign: 'center' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0A2463', marginBottom: '1rem', fontFamily: 'Outfit' }}>Verify Email</h2>
+                <p style={{ color: '#64748b', marginBottom: '2rem' }}>We sent a 6-digit OTP to <strong>{form.student_email}</strong></p>
+                
+                {errorMsg && (
+                    <div style={{ background: '#fee2e2', border: '1px solid #fecaca', padding: '1rem', borderRadius: '12px', color: '#dc2626', display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '1.5rem', textAlign: 'left' }}>
+                        <AlertCircle size={18} /> <span style={{ fontSize: '0.9rem', fontWeight: '500' }}>{errorMsg}</span>
+                    </div>
+                )}
+
+                <form onSubmit={handleVerifyAndSubmit}>
+                    <input 
+                        type="text" 
+                        maxLength={6}
+                        className="form-input" 
+                        required 
+                        value={otp} 
+                        onChange={e => setOtp(e.target.value.replace(/\D/g, ''))} 
+                        placeholder="Enter 6-digit OTP" 
+                        style={{ textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.5rem', marginBottom: '2rem', padding: '1rem' }} 
+                    />
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                        <button type="button" onClick={() => setStep(1)} className="btn-outline" style={{ flex: 1, padding: '1rem' }}>Back</button>
+                        <button type="submit" className="btn-primary" disabled={submitting || otp.length !== 6} style={{ flex: 2, padding: '1rem', justifyContent: 'center' }}>
+                            {submitting ? <div className="spinner" style={{ width: '20px', height: '20px' }}></div> : 'Verify & Admit'}
+                        </button>
+                    </div>
+                </form>
+            </motion.div>
+        </div>
     );
   }
 
@@ -108,7 +171,7 @@ export default function PublicAdmissionPage() {
             {loading ? (
               <div style={{ textAlign: 'center', padding: '3rem 0', color: '#94a3b8' }}>Loading courses...</div>
             ) : (
-              <form onSubmit={handleSubmit}>
+              <form onSubmit={handleSendOTP}>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', marginBottom: '1.5rem' }}>
                   <div style={{ flex: '1 1 250px' }}>
                     <label className="form-label">Full Name *</label>
@@ -156,15 +219,21 @@ export default function PublicAdmissionPage() {
                      </select>
                   </div>
                   {form.payment_mode !== 'cash' && (
-                    <div style={{ flex: '1 1 250px' }}>
-                      <label className="form-label">Transaction Reference *</label>
-                      <input type="text" className="form-input" required value={form.payment_reference} onChange={e => setForm({...form, payment_reference: e.target.value})} placeholder="Trxn ID / Ref No" />
-                    </div>
+                    <>
+                      <div style={{ flex: '1 1 250px' }}>
+                        <label className="form-label">Transaction Reference *</label>
+                        <input type="text" className="form-input" required value={form.payment_reference} onChange={e => setForm({...form, payment_reference: e.target.value})} placeholder="Trxn ID / Ref No" />
+                      </div>
+                      <div style={{ flex: '1 1 100%' }}>
+                         <label className="form-label">Payment Receipt Screenshot *</label>
+                         <input type="file" className="form-input" accept="image/*" required onChange={handleFileChange} />
+                      </div>
+                    </>
                   )}
                 </div>
 
                 <button type="submit" className="btn-primary" disabled={submitting} style={{ width: '100%', justifyContent: 'center', padding: '1rem', fontSize: '1.05rem', marginTop: '1rem' }}>
-                  {submitting ? <div className="spinner" style={{ width: '20px', height: '20px' }} /> : <><FileText size={20} /> Submit Application</>}
+                  {submitting ? <div className="spinner" style={{ width: '20px', height: '20px' }} /> : <><FileText size={20} /> Request OTP to Proceed</>}
                 </button>
               </form>
             )}
