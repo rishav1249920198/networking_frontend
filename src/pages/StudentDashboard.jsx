@@ -80,6 +80,7 @@ export default function StudentDashboard() {
   const [active, setActive] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [data, setData] = useState(null);
+  const [stats, setStats] = useState(null);
   const [earnings, setEarnings] = useState(null);
   const [referralStats, setReferralStats] = useState(null);
   const [referralTree, setReferralTree] = useState(null);
@@ -100,8 +101,9 @@ export default function StudentDashboard() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [dash, earn, refs, tree, adms, crs] = await Promise.all([
+        const [dash, statsRes, earn, refs, tree, adms, crs] = await Promise.all([
           api.get('/dashboard/student'),
+          api.get('/dashboard/stats'),
           api.get('/commissions/summary'),
           api.get('/referrals/stats'),
           api.get('/referrals/tree'),
@@ -109,6 +111,7 @@ export default function StudentDashboard() {
           api.get('/courses') // public list
         ]);
         setData(dash.data.data);
+        setStats(statsRes.data.data);
         setEarnings(earn.data.data);
         setReferralStats(refs.data.data);
         setReferralTree(tree.data.data);
@@ -229,10 +232,10 @@ export default function StudentDashboard() {
                   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                     style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
                     {[
-                      { label: 'Total Referrals', value: stat.total || 0, icon: Users, color: '#0A2463', sub: 'Registered students' },
-                      { label: 'Pending', value: stat.pending || 0, icon: Clock, color: '#f59e0b', sub: `Pending ₹${((stat.pending || 0) * 600).toLocaleString()}` },
-                      { label: 'Approved', value: stat.approved || 0, icon: CheckCircle, color: '#10b981', sub: `Earned ₹${((stat.approved || 0) * 1200).toLocaleString()}` },
-                      { label: 'Total Earnings', value: `₹${parseFloat(earn.total_earnings || 0).toLocaleString()}`, icon: IndianRupee, color: '#F4A261', sub: `Available: ₹${parseFloat(earn.pending_earnings || 0).toLocaleString()}`, gold: true },
+                      { label: 'Total Referrals', value: stats?.total_referrals || 0, icon: Users, color: '#0A2463', sub: 'Registered students' },
+                      { label: 'Leads (Pending)', value: stats?.total_leads || 0, icon: Clock, color: '#f59e0b', sub: `Pending Approval` },
+                      { label: 'Admissions', value: stats?.total_admissions || 0, icon: CheckCircle, color: '#10b981', sub: `Approved Students` },
+                      { label: 'Total Commission', value: `₹${parseFloat(stats?.total_commission || 0).toLocaleString()}`, icon: IndianRupee, color: '#F4A261', sub: `Earned so far`, gold: true },
                     ].map((s, i) => (
                       <motion.div key={i} className="stat-card" style={{ background: s.gold ? 'linear-gradient(135deg, #0A2463, #1a3a8f)' : 'white' }}
                         whileHover={{ y: -4 }} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
