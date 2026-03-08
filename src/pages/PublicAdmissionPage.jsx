@@ -50,14 +50,14 @@ export default function PublicAdmissionPage() {
     setErrorMsg('');
     
     try {
-      await api.post('/admissions/send-otp', {
+      await api.post('/admissions/request-otp', {
           student_name: form.student_name,
           student_email: form.student_email,
           student_mobile: form.student_mobile
       });
       setStep(2); // Go to OTP screen
     } catch (err) {
-      setErrorMsg(err.response?.data?.message || 'Failed to send OTP.');
+      setErrorMsg(err.response?.data?.message || "OTP request failed");
     } finally {
       setSubmitting(false);
     }
