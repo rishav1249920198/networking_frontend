@@ -23,7 +23,7 @@ export default function HomePage() {
         'Expires': '0'
       }
     }).then(res => {
-      const data = res.data.data || [];
+      const data = Array.isArray(res.data) ? res.data : (res.data?.data || []);
       setCourses({
         computer: data.filter(c => c.category === 'computer'),
         university: data.filter(c => c.category === 'university'),
@@ -63,7 +63,7 @@ export default function HomePage() {
         <div style={{ position: 'absolute', top: '10%', right: '5%', width: '400px', height: '400px', borderRadius: '50%', background: 'rgba(0,180,216,0.15)', filter: 'blur(60px)', animation: 'float 6s ease-in-out infinite' }} />
         <div style={{ position: 'absolute', bottom: '20%', left: '-5%', width: '300px', height: '300px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)', filter: 'blur(50px)', animation: 'float 8s ease-in-out infinite reverse' }} />
 
-        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '4rem 1.5rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', alignItems: 'center' }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center" style={{ maxWidth: '1280px', margin: '0 auto', padding: '4rem 1.5rem' }}>
           <motion.div variants={stagger} initial="hidden" animate="show">
             {/* NAAC Badge */}
             <motion.div variants={fadeUp} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: '999px', padding: '0.4rem 1rem', marginBottom: '1.5rem' }}>
@@ -109,7 +109,7 @@ export default function HomePage() {
           {/* Hero Visual */}
           <motion.div initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, delay: 0.3 }}
             className="float-animation" style={{ display: 'flex', justifyContent: 'center' }}>
-            <div style={{ width: '380px', height: '320px', background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '24px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ width: '100%', maxWidth: '380px', height: '320px', background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '24px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(255,255,255,0.12)', borderRadius: '12px', padding: '1rem' }}>
                 <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'linear-gradient(135deg, #00B4D8, #0096BB)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <TrendingUp size={20} color="white" />
@@ -164,9 +164,7 @@ export default function HomePage() {
                   <span style={{ fontSize: '1rem', fontWeight: '700', color: '#00B4D8' }}>₹{(c.fee || 0).toLocaleString()}</span>
                   {c.duration_months && <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{c.duration_months} months</span>}
                 </div>
-                <button className="btn-primary" style={{ width: '100%', marginTop: '1rem', padding: '0.6rem', fontSize: '0.85rem', justifyContent: 'center' }}>
-                  Learn More <ArrowRight size={14} />
-                </button>
+
               </motion.div>
             )) : (
               <div style={{ gridColumn: '1 / -1', padding: '3rem', textAlign: 'center', background: 'white', borderRadius: '16px', border: '1px solid rgba(10,36,99,0.08)', color: '#64748b' }}>
@@ -200,9 +198,7 @@ export default function HomePage() {
                   <span style={{ fontSize: '1rem', fontWeight: '700', color: '#00B4D8' }}>₹{(c.fee || 0).toLocaleString()}/yr</span>
                   {c.duration_months && <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>{c.duration_months/12} years</span>}
                 </div>
-                <button className="btn-accent" style={{ width: '100%', marginTop: '1rem', padding: '0.6rem', fontSize: '0.85rem', justifyContent: 'center' }}>
-                  Learn More <ArrowRight size={14} />
-                </button>
+
               </motion.div>
             )) : (
               <div style={{ gridColumn: '1 / -1', padding: '3rem', textAlign: 'center', background: 'linear-gradient(135deg, #0A2463, #1a3a8f)', borderRadius: '16px', border: '1px solid rgba(0,180,216,0.2)', color: 'rgba(255,255,255,0.7)' }}>

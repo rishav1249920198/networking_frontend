@@ -93,7 +93,7 @@ export default function Navbar() {
           )}
 
           {/* Mobile menu toggle */}
-          <button onClick={() => setMobileOpen(o => !o)} style={{ display: 'none', width: '36px', height: '36px', borderRadius: '10px', border: '1px solid rgba(10,36,99,0.12)', background: 'transparent', cursor: 'pointer', alignItems: 'center', justifyContent: 'center', color: '#0A2463' }} className="flex md:hidden">
+          <button onClick={() => setMobileOpen(o => !o)} style={{ width: '36px', height: '36px', borderRadius: '10px', border: '1px solid rgba(10,36,99,0.12)', background: 'transparent', cursor: 'pointer', alignItems: 'center', justifyContent: 'center', color: '#0A2463' }} className="flex md:hidden">
             {mobileOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
