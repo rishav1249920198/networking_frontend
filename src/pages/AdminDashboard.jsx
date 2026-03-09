@@ -502,7 +502,8 @@ export default function AdminDashboard() {
                             <td>
                               {w.status === 'pending' && (
                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                  <button onClick={() => updateWithdrawal(w.id, 'paid')} className="btn-accent" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: '#10b981', color: 'white', border: 'none' }}>Mark Paid</button>
+                                  <button onClick={() => updateWithdrawal(w.id, 'paid')} className="btn-accent" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Mark Paid</button>
+                                  <button onClick={() => updateWithdrawal(w.id, 'rejected')} className="btn-danger" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Reject</button>
                                 </div>
                               )}
                             </td>
