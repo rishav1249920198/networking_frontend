@@ -23,10 +23,13 @@ export default function HomePage() {
         'Expires': '0'
       }
     }).then(res => {
-      const data = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+      // Axios returns response in `res.data`. The backend sends `{ success: true, data: [...] }`.
+      const payload = res.data;
+      const dataArray = Array.isArray(payload?.data) ? payload.data : (Array.isArray(payload) ? payload : []);
+      
       setCourses({
-        computer: data.filter(c => c.category === 'computer'),
-        university: data.filter(c => c.category === 'university'),
+        computer: dataArray.filter(c => c.category === 'computer'),
+        university: dataArray.filter(c => c.category === 'university'),
       });
     }).catch(err => {
       console.error('Failed to load courses:', err);
