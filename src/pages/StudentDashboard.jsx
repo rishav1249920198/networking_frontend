@@ -27,7 +27,11 @@ const Sidebar = ({ active, setActive, sidebarOpen, setSidebarOpen }) => {
     <>
       {/* Overlay */}
       {sidebarOpen && (
-        <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 40, display: 'none' }} className="md:hidden block" />
+      <div
+        onClick={() => setSidebarOpen(false)}
+        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 40 }}
+        className="md:hidden block"
+      />
       )}
       <aside className="sidebar" style={{ transform: sidebarOpen ? 'translateX(0)' : undefined }}>
         {/* Logo */}

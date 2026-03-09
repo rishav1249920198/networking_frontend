@@ -56,7 +56,7 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop Links */}
-        <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }} className="hidden md:flex">
+        <div style={{ gap: '0.25rem', alignItems: 'center' }} className="hidden md:flex">
           {navLinks.map((l) => (
             <a key={l.label} href={l.href} style={{ padding: '0.5rem 1rem', borderRadius: '8px', color: '#0A2463', fontWeight: '500', fontSize: '0.9rem', textDecoration: 'none', transition: 'all 0.25s' }}
               onMouseEnter={e => { e.target.style.background = 'rgba(10,36,99,0.06)'; e.target.style.color = '#00B4D8'; }}

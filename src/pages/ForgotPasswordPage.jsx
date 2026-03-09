@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, Monitor, CheckCircle, ArrowRight } from 'lucide-react';
+import toast from 'react-hot-toast';
 import api from '../api/client';
 
 export default function ForgotPasswordPage() {
@@ -21,6 +22,7 @@ export default function ForgotPasswordPage() {
     try {
       await api.post('/auth/forgot-password', { email });
       setStep(1);
+      toast.success('OTP sent to your email.');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to send OTP.');
     } finally { setLoading(false); }
@@ -45,6 +47,7 @@ export default function ForgotPasswordPage() {
     try {
       await api.post('/auth/reset-password', { email, otp, newPassword: password });
       setStep(3);
+      toast.success('Password reset successfully. You can now login.');
     } catch (err) {
       setError(err.response?.data?.message || 'Reset failed.');
     } finally { setLoading(false); }

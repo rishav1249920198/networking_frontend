@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Monitor, CheckCircle, AlertCircle, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import api from '../api/client';
 
 export default function PublicAdmissionPage() {
@@ -56,6 +57,7 @@ export default function PublicAdmissionPage() {
           student_mobile: form.student_mobile
       });
       setStep(2); // Go to OTP screen
+      toast.success('OTP sent to your email.');
     } catch (err) {
       setErrorMsg(err.response?.data?.message || "Failed to send OTP");
     } finally {
@@ -79,6 +81,7 @@ export default function PublicAdmissionPage() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setStep(3); // Success Screen
+      toast.success('Admission successful! Check your email for login details.');
     } catch(err) {
       setErrorMsg(err.response?.data?.message || 'Invalid OTP or failed to submit.');
     } finally {
