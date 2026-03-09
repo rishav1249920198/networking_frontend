@@ -203,10 +203,21 @@ export default function AdminDashboard() {
     links.push({ id: 'users', label: 'User Management', icon: Users });
   }
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#F0F4FF' }}>
+      {/* Overlay for mobile */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 40 }}
+          className="md:hidden block"
+        />
+      )}
+      
       {/* Sidebar */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`} style={sidebarOpen ? { transform: 'translateX(0)' } : {}}>
         <div style={{ padding: '1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -216,6 +227,9 @@ export default function AdminDashboard() {
               <div style={{ color: 'white', fontWeight: '800', fontFamily: 'Outfit', fontSize: '0.95rem' }}>IGCIM Admin</div>
               <div style={{ color: '#00B4D8', fontSize: '0.6rem', letterSpacing: '0.05em' }}>{user?.role === 'super_admin' ? 'SUPER ADMIN' : 'CENTRE ADMIN'}</div>
             </div>
+            <button onClick={() => setSidebarOpen(false)} className="md:hidden block" style={{ background: 'none', border: 'none', color: 'white', marginLeft: 'auto', cursor: 'pointer' }}>
+              <X size={20} />
+            </button>
           </div>
         </div>
         <div style={{ padding: '0.75rem', margin: '0.75rem', background: 'rgba(255,255,255,0.07)', borderRadius: '10px' }}>
@@ -224,7 +238,7 @@ export default function AdminDashboard() {
         </div>
         <nav style={{ flex: 1, padding: '0.5rem 0' }}>
           {links.map(({ id, label, icon: Icon }) => (
-            <button key={id} onClick={() => setActive(id)} className={`sidebar-link ${active === id ? 'active' : ''}`}
+            <button key={id} onClick={() => { setActive(id); setSidebarOpen(false); }} className={`sidebar-link ${active === id ? 'active' : ''}`}
               style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
               <Icon size={17} /> {label}
             </button>
@@ -239,12 +253,17 @@ export default function AdminDashboard() {
 
       <main className="main-content" style={{ padding: '1.5rem' }}>
         {/* Top bar */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <div>
-            <h1 style={{ fontSize: '1.4rem', fontWeight: '800', color: '#0A2463', fontFamily: 'Outfit' }}>
-              {links.find(l => l.id === active)?.label || 'Dashboard'}
-            </h1>
-            <p style={{ color: '#64748b', fontSize: '0.85rem' }}>IGCIM Administration Panel</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <button onClick={() => setSidebarOpen(true)} className="md:hidden block" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#0A2463', padding: '0.25rem' }}>
+              <Menu size={22} />
+            </button>
+            <div>
+              <h1 style={{ fontSize: '1.4rem', fontWeight: '800', color: '#0A2463', fontFamily: 'Outfit' }}>
+                {links.find(l => l.id === active)?.label || 'Dashboard'}
+              </h1>
+              <p style={{ color: '#64748b', fontSize: '0.85rem' }}>IGCIM Administration Panel</p>
+            </div>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
             {user?.role === 'co-admin' && (
