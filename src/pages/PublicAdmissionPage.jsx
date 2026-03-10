@@ -54,7 +54,8 @@ export default function PublicAdmissionPage() {
       await api.post('/admissions/request-otp', {
           student_name: form.student_name,
           student_email: form.student_email,
-          student_mobile: form.student_mobile
+          student_mobile: form.student_mobile,
+          course_id: form.course_id
       });
       setStep(2); // Go to OTP screen
       toast.success('OTP sent to your email.');
