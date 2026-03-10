@@ -8,7 +8,7 @@ const STEPS = ['Details', 'Verify OTP', 'Done'];
 
 export default function RegisterPage() {
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState({ full_name: '', email: '', mobile: '', password: '', referral_code: '' });
+  const [form, setForm] = useState({ name: '', email: '', mobile: '', password: '', referral_code: '' });
   const [otp, setOtp] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -95,7 +95,7 @@ export default function RegisterPage() {
               <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1.5rem' }}>Fill in your details to get started</p>
 
               {[
-                { key: 'full_name', label: 'Full Name', icon: <User size={15} />, type: 'text', placeholder: 'Your full name', required: true },
+                { key: 'name', label: 'Full Name', icon: <User size={15} />, type: 'text', placeholder: 'Your full name', required: true },
                 { key: 'email', label: 'Email', icon: <Mail size={15} />, type: 'email', placeholder: 'your@email.com', required: true },
                 { key: 'mobile', label: 'Mobile Number', icon: <Phone size={15} />, type: 'tel', placeholder: '+91 XXXXXXXXXX', required: true },
               ].map(field => (
