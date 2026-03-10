@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import {
   LayoutDashboard, BookOpen, Users, LogOut, Monitor, Settings,
-  CheckCircle, X, Plus, TrendingUp, IndianRupee, AlertCircle, RefreshCw
+  CheckCircle, X, Plus, TrendingUp, IndianRupee, AlertCircle, RefreshCw, Menu
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -295,15 +295,18 @@ export default function AdminDashboard() {
                     { label: 'Approved', value: stats.approved || 0, icon: CheckCircle, color: '#10b981' },
                     { label: 'Total Commissions', value: `₹${parseFloat(commStats.total_commissions || 0).toLocaleString()}`, icon: IndianRupee, color: '#00B4D8' },
                     { label: 'Total Students', value: studentStats.total_students || 0, icon: Users, color: '#8b5cf6' },
-                  ].map((s, i) => (
-                    <motion.div key={i} className="stat-card" style={{ background: 'white' }} whileHover={{ y: -4 }} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${s.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.75rem' }}>
-                        <s.icon size={18} color={s.color} />
-                      </div>
-                      <div style={{ fontSize: '1.65rem', fontWeight: '800', color: s.color, fontFamily: 'Outfit', marginBottom: '0.2rem' }}>{s.value}</div>
-                      <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '500' }}>{s.label}</div>
-                    </motion.div>
-                  ))}
+                  ].map((s, i) => {
+                      const Icon = s.icon;
+                      return (
+                        <motion.div key={i} className="stat-card" style={{ background: 'white' }} whileHover={{ y: -4 }} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
+                          <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${s.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.75rem' }}>
+                            <Icon size={18} color={s.color} />
+                          </div>
+                          <div style={{ fontSize: '1.65rem', fontWeight: '800', color: s.color, fontFamily: 'Outfit', marginBottom: '0.2rem' }}>{s.value}</div>
+                          <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '500' }}>{s.label}</div>
+                        </motion.div>
+                      );
+                    })}
                 </div>
 
                 {/* Recent Admissions */}

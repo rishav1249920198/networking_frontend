@@ -241,19 +241,22 @@ export default function StudentDashboard() {
                       { label: 'Leads (Pending)', value: stats?.total_leads || 0, icon: Clock, color: '#f59e0b', sub: `Pending Approval` },
                       { label: 'Admissions', value: stats?.total_admissions || 0, icon: CheckCircle, color: '#10b981', sub: `Approved Students` },
                       { label: 'Total Commission', value: `₹${parseFloat(stats?.total_commission || 0).toLocaleString()}`, icon: IndianRupee, color: '#F4A261', sub: `Earned so far`, gold: true },
-                    ].map((s, i) => (
-                      <motion.div key={i} className="stat-card" style={{ background: s.gold ? 'linear-gradient(135deg, #0A2463, #1a3a8f)' : 'white' }}
-                        whileHover={{ y: -4 }} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: s.gold ? 'rgba(255,255,255,0.15)' : `${s.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <s.icon size={20} color={s.gold ? '#F4A261' : s.color} />
+                    ].map((s, i) => {
+                      const Icon = s.icon;
+                      return (
+                        <motion.div key={i} className="stat-card" style={{ background: s.gold ? 'linear-gradient(135deg, #0A2463, #1a3a8f)' : 'white' }}
+                          whileHover={{ y: -4 }} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                            <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: s.gold ? 'rgba(255,255,255,0.15)' : `${s.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Icon size={20} color={s.gold ? '#F4A261' : s.color} />
+                            </div>
                           </div>
-                        </div>
-                        <div style={{ fontSize: '1.75rem', fontWeight: '800', color: s.gold ? 'white' : s.color, fontFamily: 'Outfit', marginBottom: '0.25rem' }}>{s.value}</div>
-                        <div style={{ fontSize: '0.8rem', fontWeight: '600', color: s.gold ? 'rgba(255,255,255,0.9)' : '#374151', marginBottom: '0.2rem' }}>{s.label}</div>
-                        <div style={{ fontSize: '0.72rem', color: s.gold ? 'rgba(255,255,255,0.55)' : '#94a3b8' }}>{s.sub}</div>
-                      </motion.div>
-                    ))}
+                          <div style={{ fontSize: '1.75rem', fontWeight: '800', color: s.gold ? 'white' : s.color, fontFamily: 'Outfit', marginBottom: '0.25rem' }}>{s.value}</div>
+                          <div style={{ fontSize: '0.8rem', fontWeight: '600', color: s.gold ? 'rgba(255,255,255,0.9)' : '#374151', marginBottom: '0.2rem' }}>{s.label}</div>
+                          <div style={{ fontSize: '0.72rem', color: s.gold ? 'rgba(255,255,255,0.55)' : '#94a3b8' }}>{s.sub}</div>
+                        </motion.div>
+                      );
+                    })}
                   </motion.div>
 
                   {/* Charts Row */}
