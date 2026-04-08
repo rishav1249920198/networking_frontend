@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Trophy, Medal, Star, TrendingUp, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import api from '../api/client';
+import ICIcon from './ICIcon';
 
 const Leaderboard = () => {
   const [data, setData] = useState([]);
