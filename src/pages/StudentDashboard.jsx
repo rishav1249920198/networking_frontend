@@ -25,6 +25,7 @@ const Sidebar = ({ active, setActive, sidebarOpen, setSidebarOpen }) => {
     { id: 'referrals', label: 'My Referrals', icon: Users },
     { id: 'tree', label: 'Referral Tree', icon: Link2 },
     { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
+    { id: 'admissions', label: 'My Admissions', icon: BookOpen },
     { id: 'earnings', label: 'Earnings', icon: Wallet },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
@@ -109,6 +110,7 @@ export default function StudentDashboard() {
   const [settings, setSettings] = useState({ ic_conversion_rate: '1.0' });
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Tree Centering Logic
   const treeContainerRef = useRef(null);
@@ -134,6 +136,8 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     const load = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const [dash, statsRes, earn, refs, tree, adms, crs, withdrawalsRes, settingsRes] = await Promise.all([
           api.get('/dashboard/student'),
@@ -157,6 +161,8 @@ export default function StudentDashboard() {
         if (settingsRes) setSettings(settingsRes.data.data || { ic_conversion_rate: '1.0' });
       } catch (err) {
         console.error('Dashboard load error', err);
+        setError('Failed to load dashboard data. Please try again.');
+        toast.error('Failed to load dashboard data');
       } finally {
         setLoading(false);
       }
@@ -247,7 +253,7 @@ export default function StudentDashboard() {
               <div style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.9rem', fontFamily: 'Outfit' }}>
                 {active === 'dashboard' ? 'Dashboard' : active === 'referrals' ? 'My Referrals' : active === 'tree' ? 'Referral Tree' : active === 'leaderboard' ? 'Leaderboard' : active === 'earnings' ? 'Earnings' : active.charAt(0).toUpperCase() + active.slice(1)}
               </div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }} className="hidden sm:block">Welcome back, {user?.fullName?.split(' ')[0]}</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }} className="hidden sm:block">Welcome back, {user?.fullName?.split(' ')[0] || 'User'}</div>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
@@ -272,6 +278,15 @@ export default function StudentDashboard() {
           {loading ? (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
               <div className="spinner" style={{ width: '40px', height: '40px', borderColor: 'var(--border)', borderTopColor: 'var(--text-primary)' }} />
+            </div>
+          ) : error ? (
+            <div style={{ textAlign: 'center', padding: '3rem', background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border)' }}>
+              <AlertCircle size={40} color="var(--danger)" style={{ marginBottom: '1rem' }} />
+              <h3 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Oops! Something went wrong</h3>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>{error}</p>
+              <button onClick={() => window.location.reload()} className="btn-primary" style={{ padding: '0.6rem 1.25rem' }}>
+                <RefreshCw size={16} /> Retry Now
+              </button>
             </div>
           ) : (
             <>
@@ -387,7 +402,7 @@ export default function StudentDashboard() {
                             {(referralStats?.recent || []).length === 0 ? (
                               <tr><td colSpan={4} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No referrals yet. Share your code!</td></tr>
                             ) : (
-                              referralStats.recent.slice(0, 5).map(r => (
+                              (referralStats?.recent || []).slice(0, 5).map(r => (
                                 <tr key={r.id}>
                                   <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{r.full_name}</td>
                                   <td style={{ fontFamily: 'monospace', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{r.system_id}</td>
@@ -450,9 +465,9 @@ export default function StudentDashboard() {
                           </tr>
                         </thead>
                         <tbody>
-                          {referralStats?.recent?.length === 0 ? (
-                            <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-secondary)' }}>No referrals found.</td></tr>
-                          ) : referralStats.recent.map(r => (
+                            { (referralStats?.recent || []).length === 0 ? (
+                              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-secondary)' }}>No referrals found.</td></tr>
+                            ) : referralStats.recent.map(r => (
                             <tr key={r.id}>
                               <td>
                                 <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{r.full_name}</div>

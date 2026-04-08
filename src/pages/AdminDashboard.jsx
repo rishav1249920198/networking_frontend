@@ -43,9 +43,11 @@ export default function AdminDashboard() {
   const [enrollModal, setEnrollModal] = useState(null); 
   const [settings, setSettings] = useState({ ic_conversion_rate: '1.0' });
   const [settingsLoading, setSettingsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const loadData = async () => {
     setLoading(true);
+    setError(null);
     try {
       const isSuperOrAdmin = ['super_admin', 'admin'].includes(user?.role);
       const reqs = [
@@ -72,7 +74,11 @@ export default function AdminDashboard() {
       if (isSuperOrAdmin && responses[7]) {
         setAllUsers(responses[7].data.data || []);
       }
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+      console.error(e);
+      setError('Failed to fetch admin data. Please check your connection.');
+      toast.error('Data loading failed');
+    }
     finally { setLoading(false); }
   };
 
@@ -329,6 +335,15 @@ export default function AdminDashboard() {
             <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }`}</style>
             {[1, 2, 3, 4].map(i => <SkeletonCard key={i} />)}
           </div>
+        ) : error ? (
+           <div style={{ textAlign: 'center', padding: '3rem', background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border)' }}>
+             <AlertCircle size={40} color="var(--danger)" style={{ marginBottom: '1rem' }} />
+             <h3 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Admin Data Error</h3>
+             <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>{error}</p>
+             <button onClick={() => loadData()} className="btn-primary" style={{ padding: '0.6rem 1.25rem' }}>
+               <RefreshCw size={16} /> Try Refreshing
+             </button>
+           </div>
         ) : (
           <>
             {/* === OVERVIEW === */}
