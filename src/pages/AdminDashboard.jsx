@@ -436,7 +436,13 @@ export default function AdminDashboard() {
                           <td style={{ fontWeight: '600' }}>₹{parseFloat(a.snapshot_fee).toLocaleString()}</td>
                           <td style={{ color: '#00B4D8', fontSize: '0.8rem' }}>{a.referrer_name || '—'}</td>
                           <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>
-                            <ICIcon size={14} /> {a.snapshot_commission_ic || (a.snapshot_fee * a.snapshot_commission_percent / 100)}
+                            {a.referrer_name ? (
+                              <>
+                                <ICIcon size={14} /> {a.snapshot_commission_ic || (a.snapshot_fee * a.snapshot_commission_percent / 100)}
+                              </>
+                            ) : (
+                              <span style={{ color: 'var(--text-secondary)', fontWeight: '400' }}>—</span>
+                            )}
                           </td>
                           <td><span className="badge badge-info">{a.admission_mode}</span></td>
                           <td><span className={`badge badge-${a.status}`}>{a.status}</span></td>
@@ -477,15 +483,15 @@ export default function AdminDashboard() {
                       <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: '600', color: 'var(--text-primary)' }}>IC to INR Conversion Rate</label>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <div style={{ flex: 1, position: 'relative' }}>
-                          <div style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center' }}>
+                          <div style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', pointerEvents: 'none', color: 'var(--text-primary)', zIndex: 10 }}>
                              <ICIcon size={18} />
-                             <span style={{ marginLeft: '0.5rem', fontWeight: 'bold' }}>1 IC = ₹</span>
+                             <span style={{ marginLeft: '0.5rem', fontWeight: 'bold', fontSize: '1rem' }}>1 IC = ₹</span>
                           </div>
                           <input 
                             type="number" 
                             step="0.01"
                             className="form-input" 
-                            style={{ paddingLeft: '5rem' }}
+                            style={{ paddingLeft: '7.5rem', fontWeight: '700', fontSize: '1.1rem' }}
                             value={settings.ic_conversion_rate} 
                             onChange={e => setSettings({ ...settings, ic_conversion_rate: e.target.value })} 
                             required 
