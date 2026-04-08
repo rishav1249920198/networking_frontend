@@ -135,7 +135,7 @@ export default function StudentDashboard() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [dash, statsRes, earn, refs, tree, adms, crs, withdrawalsRes] = await Promise.all([
+        const [dash, statsRes, earn, refs, tree, adms, crs, withdrawalsRes, settingsRes] = await Promise.all([
           api.get('/dashboard/student'),
           api.get('/dashboard/stats'),
           api.get('/commissions/summary'),
@@ -154,7 +154,7 @@ export default function StudentDashboard() {
         setAdmissions(adms.data.data || []);
         setCourses(crs.data.data || []);
         setWithdrawals(withdrawalsRes.data.data || []);
-        if (responses[8]) setSettings(responses[8].data.data || { ic_conversion_rate: '1.0' });
+        if (settingsRes) setSettings(settingsRes.data.data || { ic_conversion_rate: '1.0' });
       } catch (err) {
         console.error('Dashboard load error', err);
       } finally {
