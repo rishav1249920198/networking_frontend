@@ -92,13 +92,13 @@ export default function PublicAdmissionPage() {
 
   if (step === 3) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F0F4FF' }}>
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ background: 'white', padding: '3rem', borderRadius: '24px', textAlign: 'center', maxWidth: '400px', boxShadow: 'var(--shadow-lg)' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ background: 'var(--bg-card)', padding: '3rem', borderRadius: '24px', textAlign: 'center', maxWidth: '400px', boxShadow: 'var(--shadow-lg)' }}>
           <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#d1fae5', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
             <CheckCircle size={32} />
           </div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0A2463', marginBottom: '1rem', fontFamily: 'Outfit' }}>Success!</h2>
-          <p style={{ color: '#64748b', marginBottom: '2rem' }}>Your admission has been successfully completed. Login details have been sent to your email.</p>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '1rem', fontFamily: 'Outfit' }}>Success!</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Your admission has been successfully completed. Login details have been sent to your email.</p>
           <Link to="/login" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-flex' }}>Login to Portal</Link>
         </motion.div>
       </div>
@@ -107,10 +107,10 @@ export default function PublicAdmissionPage() {
 
   if (step === 2) {
     return (
-        <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #F0F4FF 0%, #e2e8f0 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ background: 'white', padding: '3rem', borderRadius: '24px', width: '100%', maxWidth: '450px', boxShadow: 'var(--shadow-lg)', textAlign: 'center' }}>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0A2463', marginBottom: '1rem', fontFamily: 'Outfit' }}>Verify Email</h2>
-                <p style={{ color: '#64748b', marginBottom: '2rem' }}>We sent a 6-digit OTP to <strong>{form.student_email}</strong></p>
+        <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ background: 'var(--bg-card)', padding: '3rem', borderRadius: '24px', width: '100%', maxWidth: '450px', boxShadow: 'var(--shadow-lg)', textAlign: 'center' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '1rem', fontFamily: 'Outfit' }}>Verify Email</h2>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>We sent a 6-digit OTP to <strong>{form.student_email}</strong></p>
                 
                 {errorMsg && (
                     <div style={{ background: '#fee2e2', border: '1px solid #fecaca', padding: '1rem', borderRadius: '12px', color: '#dc2626', display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '1.5rem', textAlign: 'left' }}>
@@ -142,15 +142,15 @@ export default function PublicAdmissionPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #F0F4FF 0%, #e2e8f0 100%)', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
-      <header style={{ background: 'white', padding: '1rem 2rem', boxShadow: '0 2px 10px rgba(10,36,99,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <header style={{ background: 'var(--bg-card)', padding: '1rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
           <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg, #0A2463, #00B4D8)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Monitor size={20} color="white" />
           </div>
           <div>
-            <div style={{ fontWeight: '800', color: '#0A2463', fontFamily: 'Outfit', fontSize: '1.2rem', lineHeight: 1 }}>IGCIM</div>
+            <div style={{ fontWeight: '800', color: 'var(--text-primary)', fontFamily: 'Outfit', fontSize: '1.2rem', lineHeight: 1 }}>IGCIM</div>
             <div style={{ fontSize: '0.65rem', color: '#00B4D8', fontWeight: '700', letterSpacing: '0.05em' }}>COMPUTER CENTRE</div>
           </div>
         </Link>
@@ -158,14 +158,14 @@ export default function PublicAdmissionPage() {
       </header>
 
       {/* Main Form Area */}
-      <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 1rem' }}>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ background: 'white', borderRadius: '24px', boxShadow: 'var(--shadow-lg)', width: '100%', maxWidth: '640px', overflow: 'hidden' }}>
-          <div style={{ background: 'linear-gradient(135deg, #0A2463, #1a3a8f)', padding: '2rem', color: 'white', textAlign: 'center' }}>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: '800', fontFamily: 'Outfit', marginBottom: '0.5rem' }}>Online Admission</h1>
-            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem' }}>Fill out the application below to secure your seat</p>
+      <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'clamp(1rem, 5vw, 3rem) 1rem' }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ background: 'var(--bg-card)', borderRadius: '24px', boxShadow: 'var(--shadow-lg)', width: '100%', maxWidth: '640px', overflow: 'hidden' }}>
+          <div style={{ background: 'linear-gradient(135deg, #0A2463, #1a3a8f)', padding: '1.5rem', color: 'white', textAlign: 'center' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: '800', fontFamily: 'Outfit', marginBottom: '0.5rem' }}>Online Admission</h1>
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem' }}>Fill out the application below to secure your seat</p>
           </div>
           
-          <div style={{ padding: '2.5rem' }}>
+          <div style={{ padding: 'clamp(1.25rem, 5vw, 2.5rem)' }}>
             {errorMsg && (
               <div style={{ background: '#fee2e2', border: '1px solid #fecaca', padding: '1rem', borderRadius: '12px', color: '#dc2626', display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '2rem' }}>
                 <AlertCircle size={18} /> <span style={{ fontSize: '0.9rem', fontWeight: '500' }}>{errorMsg}</span>
@@ -203,9 +203,9 @@ export default function PublicAdmissionPage() {
                   <textarea className="form-input" required rows="2" value={form.address} onChange={e => setForm({...form, address: e.target.value})} placeholder="Enter your complete address"></textarea>
                 </div>
 
-                <div style={{ marginBottom: '2rem', borderTop: '1px solid rgba(10,36,99,0.08)', paddingTop: '1.5rem' }}>
+                <div style={{ marginBottom: '2rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
                   <label className="form-label">Select Course *</label>
-                  <select className="form-input" required value={form.course_id} onChange={e => setForm({...form, course_id: e.target.value})} style={{ fontWeight: '600', color: '#0A2463' }}>
+                  <select className="form-input" required value={form.course_id} onChange={e => setForm({...form, course_id: e.target.value})} style={{ fontWeight: '600', color: 'var(--text-primary)', background: 'var(--bg-card)' }}>
                     <option value="">-- Choose a course --</option>
                     {courses.map(c => (
                       <option key={c.id} value={c.id}>{c.name} (Fee: ₹{parseFloat(c.fee).toLocaleString()})</option>
@@ -216,7 +216,7 @@ export default function PublicAdmissionPage() {
                 <div style={{ marginBottom: '1.5rem', display: 'flex', flexWrap: 'wrap', gap: '1.5rem' }}>
                   <div style={{ flex: '1 1 250px' }}>
                      <label className="form-label">Payment Mode</label>
-                     <select className="form-input" value={form.payment_mode} onChange={e => setForm({...form, payment_mode: e.target.value})}>
+                     <select className="form-input" value={form.payment_mode} onChange={e => setForm({...form, payment_mode: e.target.value})} style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>
                        <option value="upi">UPI / Online</option>
                        <option value="bank_transfer">Bank Transfer</option>
                        <option value="cash">Cash at branch</option>

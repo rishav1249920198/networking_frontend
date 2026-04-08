@@ -3,11 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Monitor, Menu, X, Sun, Moon, ChevronRight, LogIn, UserPlus } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import ThemeToggle from './ThemeToggle';
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [dark, setDark] = useState(false);
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -16,10 +16,6 @@ export default function Navbar() {
     window.addEventListener('scroll', handler);
     return () => window.removeEventListener('scroll', handler);
   }, []);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', dark);
-  }, [dark]);
 
   const navLinks = [
     { label: 'Home', href: '/' },
@@ -35,10 +31,10 @@ export default function Navbar() {
       transition={{ duration: 0.6, ease: 'easeOut' }}
       style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-        background: scrolled ? 'rgba(255,255,255,0.95)' : 'transparent',
+        background: scrolled ? 'var(--glass)' : 'transparent',
         backdropFilter: scrolled ? 'blur(20px)' : 'none',
-        borderBottom: scrolled ? '1px solid rgba(10,36,99,0.08)' : 'none',
-        boxShadow: scrolled ? '0 4px 20px rgba(10,36,99,0.08)' : 'none',
+        borderBottom: scrolled ? '1px solid var(--border)' : 'none',
+        boxShadow: scrolled ? 'var(--shadow)' : 'none',
         transition: 'all 0.4s',
         padding: '0 0',
       }}
@@ -50,17 +46,17 @@ export default function Navbar() {
             <Monitor size={20} color="white" />
           </div>
           <div>
-            <div style={{ fontSize: '1.1rem', fontWeight: '800', color: '#0A2463', fontFamily: 'Outfit, sans-serif', lineHeight: 1.1 }}>IGCIM</div>
-            <div style={{ fontSize: '0.65rem', color: '#00B4D8', fontWeight: '600', letterSpacing: '0.05em' }}>COMPUTER CENTRE</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-primary)', fontFamily: 'Outfit, sans-serif', lineHeight: 1.1 }}>IGCIM</div>
+            <div style={{ fontSize: '0.65rem', color: 'var(--accent)', fontWeight: '600', letterSpacing: '0.05em' }} className="hidden xs:block">COMPUTER CENTRE</div>
           </div>
         </Link>
 
         {/* Desktop Links */}
-        <div style={{ gap: '0.25rem', alignItems: 'center' }} className="hidden md:flex">
+        <div style={{ gap: '0.75rem', alignItems: 'center' }} className="hidden lg:flex">
           {navLinks.map((l) => (
-            <a key={l.label} href={l.href} style={{ padding: '0.5rem 1rem', borderRadius: '8px', color: '#0A2463', fontWeight: '500', fontSize: '0.9rem', textDecoration: 'none', transition: 'all 0.25s' }}
-              onMouseEnter={e => { e.target.style.background = 'rgba(10,36,99,0.06)'; e.target.style.color = '#00B4D8'; }}
-              onMouseLeave={e => { e.target.style.background = 'transparent'; e.target.style.color = '#0A2463'; }}>
+            <a key={l.label} href={l.href} style={{ padding: '0.5rem 1rem', borderRadius: '10px', color: 'var(--text-primary)', fontWeight: '600', fontSize: '0.85rem', textDecoration: 'none', transition: 'all 0.3s' }}
+              onMouseEnter={e => { e.target.style.background = 'var(--accent)20'; e.target.style.color = 'var(--accent)'; }}
+              onMouseLeave={e => { e.target.style.background = 'transparent'; e.target.style.color = 'var(--text-primary)'; }}>
               {l.label}
             </a>
           ))}
@@ -68,12 +64,10 @@ export default function Navbar() {
 
         {/* Right Side */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <button onClick={() => setDark(d => !d)} style={{ width: '36px', height: '36px', borderRadius: '10px', border: '1px solid rgba(10,36,99,0.12)', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0A2463' }}>
-            {dark ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
+          <ThemeToggle />
 
           {isAuthenticated ? (
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <div style={{ gap: '0.5rem', alignItems: 'center' }} className="hidden lg:flex">
               <button onClick={() => navigate('/dashboard')} className="btn-accent" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
                 Dashboard
               </button>
@@ -82,18 +76,18 @@ export default function Navbar() {
               </button>
             </div>
           ) : (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <Link to="/login" className="btn-outline" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
-                <LogIn size={15} /> Login
+            <div style={{ gap: '0.4rem', alignItems: 'center' }} className="flex">
+              <Link to="/login" className="btn-outline" style={{ padding: '0.5rem 0.8rem', fontSize: '0.85rem', gap: '0.4rem' }}>
+                <LogIn size={15} /> <span className="hidden sm:inline">Login</span>
               </Link>
-              <Link to="/register" className="btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
-                <UserPlus size={15} /> Register
+              <Link to="/register" className="btn-primary hidden xs:flex" style={{ padding: '0.5rem 0.8rem', fontSize: '0.85rem', gap: '0.4rem' }}>
+                <UserPlus size={15} /> <span className="hidden sm:inline">Register</span>
               </Link>
             </div>
           )}
 
           {/* Mobile menu toggle */}
-          <button onClick={() => setMobileOpen(o => !o)} style={{ width: '36px', height: '36px', borderRadius: '10px', border: '1px solid rgba(10,36,99,0.12)', background: 'transparent', cursor: 'pointer', alignItems: 'center', justifyContent: 'center', color: '#0A2463' }} className="flex md:hidden">
+          <button onClick={() => setMobileOpen(o => !o)} style={{ width: '36px', height: '36px', borderRadius: '10px', border: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)' }} className="flex lg:hidden">
             {mobileOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
@@ -103,16 +97,23 @@ export default function Navbar() {
       <AnimatePresence>
         {mobileOpen && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-            style={{ background: 'white', borderTop: '1px solid rgba(10,36,99,0.08)', padding: '1rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            style={{ background: 'var(--bg-card)', borderTop: '1px solid var(--border)', padding: '1rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {navLinks.map(l => (
-              <a key={l.label} href={l.href} onClick={() => setMobileOpen(false)} style={{ padding: '0.75rem', borderRadius: '10px', color: '#0A2463', fontWeight: '500', textDecoration: 'none', display: 'block' }}>
+              <a key={l.label} href={l.href} onClick={() => setMobileOpen(false)} style={{ padding: '0.75rem', borderRadius: '10px', color: 'var(--text-primary)', fontWeight: '500', textDecoration: 'none', display: 'block' }}>
                 {l.label}
               </a>
             ))}
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-              <Link to="/login" className="btn-outline" style={{ flex: 1, justifyContent: 'center', padding: '0.65rem' }}>Login</Link>
-              <Link to="/register" className="btn-primary" style={{ flex: 1, justifyContent: 'center', padding: '0.65rem' }}>Register</Link>
-            </div>
+            {isAuthenticated ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="btn-accent" style={{ justifyContent: 'center', padding: '0.75rem' }}>Dashboard</Link>
+                <button onClick={() => { logout(); setMobileOpen(false); }} style={{ padding: '0.75rem', borderRadius: '12px', background: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.15)', fontWeight: '600', cursor: 'pointer' }}>Logout</button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <Link to="/login" onClick={() => setMobileOpen(false)} className="btn-outline" style={{ flex: 1, justifyContent: 'center', padding: '0.65rem' }}>Login</Link>
+                <Link to="/register" onClick={() => setMobileOpen(false)} className="btn-primary" style={{ flex: 1, justifyContent: 'center', padding: '0.65rem' }}>Register</Link>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

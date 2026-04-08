@@ -29,33 +29,37 @@ const DashboardRouter = () => {
   return <Navigate to="/" replace />;
 };
 
+import { ThemeProvider } from './context/ThemeContext';
+
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Toaster position="top-right" toastOptions={{ duration: 4000, style: { background: '#333', color: '#fff' } }} />
-        <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--bg)' }}><div className="spinner" style={{ borderColor: 'rgba(10,36,99,0.3)', borderTopColor: 'var(--primary)', width: '40px', height: '40px', borderWidth: '4px' }}></div></div>}>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/admission" element={<PublicAdmissionPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/dashboard" element={<ProtectedRoute><DashboardRouter /></ProtectedRoute>} />
-            <Route path="/dashboard/student" element={
-              <ProtectedRoute roles={['student', 'co-admin']}><StudentDashboard /></ProtectedRoute>
-            } />
-            <Route path="/dashboard/staff" element={
-              <ProtectedRoute roles={['staff']}><StaffDashboard /></ProtectedRoute>
-            } />
-            <Route path="/dashboard/admin" element={
-              <ProtectedRoute roles={['centre_admin', 'super_admin', 'admin', 'co-admin']}><AdminDashboard /></ProtectedRoute>
-            } />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Toaster position="top-right" toastOptions={{ duration: 4000, style: { background: '#333', color: '#fff' } }} />
+          <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--bg)' }}><div className="spinner" style={{ borderColor: 'rgba(10,36,99,0.3)', borderTopColor: 'var(--primary)', width: '40px', height: '40px', borderWidth: '4px' }}></div></div>}>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/admission" element={<PublicAdmissionPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/dashboard" element={<ProtectedRoute><DashboardRouter /></ProtectedRoute>} />
+              <Route path="/dashboard/student" element={
+                <ProtectedRoute roles={['student', 'co-admin']}><StudentDashboard /></ProtectedRoute>
+              } />
+              <Route path="/dashboard/staff" element={
+                <ProtectedRoute roles={['staff']}><StaffDashboard /></ProtectedRoute>
+              } />
+              <Route path="/dashboard/admin" element={
+                <ProtectedRoute roles={['centre_admin', 'super_admin', 'admin', 'co-admin']}><AdminDashboard /></ProtectedRoute>
+              } />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

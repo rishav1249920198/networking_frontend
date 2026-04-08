@@ -54,15 +54,15 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F0F4FF', padding: '2rem 1rem' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', padding: '2rem 1rem' }}>
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
-        style={{ width: '100%', maxWidth: '420px', background: 'white', borderRadius: '24px', boxShadow: '0 8px 40px rgba(10,36,99,0.1)', padding: '2.5rem' }}>
+        style={{ width: '100%', maxWidth: '420px', background: 'var(--bg-card)', borderRadius: '24px', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)', padding: '2.5rem' }}>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
           <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg, #0A2463, #00B4D8)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Monitor size={18} color="white" />
           </div>
-          <div style={{ fontSize: '1rem', fontWeight: '800', color: '#0A2463', fontFamily: 'Outfit, sans-serif' }}>IGCIM Computer Centre</div>
+          <div style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--text-primary)', fontFamily: 'Outfit, sans-serif' }}>IGCIM Computer Centre</div>
         </div>
 
         {error && (
@@ -74,8 +74,8 @@ export default function ForgotPasswordPage() {
         <AnimatePresence mode="wait">
           {step === 0 && (
             <motion.form key="s0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onSubmit={sendOTP}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0A2463', fontFamily: 'Outfit', marginBottom: '0.25rem' }}>Forgot Password</h2>
-              <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1.75rem' }}>Enter your registered email to receive an OTP</p>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-primary)', fontFamily: 'Outfit', marginBottom: '0.25rem' }}>Forgot Password</h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.75rem' }}>Enter your registered email to receive an OTP</p>
               <div style={{ marginBottom: '1.5rem' }}>
                 <label className="form-label">Email Address</label>
                 <div style={{ position: 'relative' }}>
@@ -91,8 +91,8 @@ export default function ForgotPasswordPage() {
 
           {step === 1 && (
             <motion.form key="s1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onSubmit={verifyOTP}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0A2463', fontFamily: 'Outfit', marginBottom: '0.25rem' }}>Enter OTP</h2>
-              <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1.75rem' }}>6-digit OTP sent to <strong>{email}</strong></p>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-primary)', fontFamily: 'Outfit', marginBottom: '0.25rem' }}>Enter OTP</h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.75rem' }}>6-digit OTP sent to <strong>{email}</strong></p>
               <div style={{ marginBottom: '1.5rem' }}>
                 <label className="form-label">OTP Code</label>
                 <input type="text" className="form-input" placeholder="000000" maxLength={6} value={otp}
@@ -107,8 +107,8 @@ export default function ForgotPasswordPage() {
 
           {step === 2 && (
             <motion.form key="s2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onSubmit={resetPassword}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0A2463', fontFamily: 'Outfit', marginBottom: '0.25rem' }}>New Password</h2>
-              <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1.75rem' }}>Create a strong new password</p>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-primary)', fontFamily: 'Outfit', marginBottom: '0.25rem' }}>New Password</h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.75rem' }}>Create a strong new password</p>
               <div style={{ marginBottom: '1.5rem' }}>
                 <label className="form-label">New Password</label>
                 <div style={{ position: 'relative' }}>
@@ -132,8 +132,8 @@ export default function ForgotPasswordPage() {
               <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'linear-gradient(135deg, #10b981, #059669)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
                 <CheckCircle size={32} color="white" />
               </div>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0A2463', fontFamily: 'Outfit', marginBottom: '0.5rem' }}>Password Reset!</h2>
-              <p style={{ color: '#64748b', marginBottom: '2rem' }}>Your password has been updated successfully.</p>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-primary)', fontFamily: 'Outfit', marginBottom: '0.5rem' }}>Password Reset!</h2>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Your password has been updated successfully.</p>
               <button onClick={() => navigate('/login')} className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '0.9rem' }}>
                 Go to Login <ArrowRight size={16} />
               </button>

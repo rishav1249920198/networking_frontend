@@ -15,6 +15,12 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback(async (email, password) => {
     const res = await api.post('/auth/login', { email, password });
+    
+    // Check if 2FA is required for Super Admins
+    if (res.data.data?.require2FA) {
+      return { require2FA: true, email: res.data.data.email };
+    }
+
     const { token: newToken, user: newUser } = res.data.data;
     localStorage.setItem('igcim_token', newToken);
     localStorage.setItem('igcim_user', JSON.stringify(newUser));
@@ -23,7 +29,18 @@ export const AuthProvider = ({ children }) => {
     return newUser;
   }, []);
 
-  const logout = useCallback(() => {
+  const verify2FA = useCallback(async (email, otp) => {
+    const res = await api.post('/auth/verify-2fa', { email, otp });
+    const { token: newToken, user: newUser } = res.data.data;
+    localStorage.setItem('igcim_token', newToken);
+    localStorage.setItem('igcim_user', JSON.stringify(newUser));
+    setToken(newToken);
+    setUser(newUser);
+    return newUser;
+  }, []);
+
+  const logout = useCallback(async () => {
+    try { await api.post('/auth/logout'); } catch (e) { /* ignore network error on logout */ }
     localStorage.removeItem('igcim_token');
     localStorage.removeItem('igcim_user');
     setToken(null);
@@ -46,7 +63,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated, login, logout, updateUser, hasRole }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated, login, verify2FA, logout, updateUser, hasRole }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,16 +1,21 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  RadialBarChart, RadialBar, Legend
 } from 'recharts';
 import {
   Users, TrendingUp, DollarSign, Clock, LogOut, Monitor, LayoutDashboard,
-  BookOpen, Link2, Wallet, Settings, Menu, X, Copy, CheckCircle, IndianRupee, Plus
+  BookOpen, Link2, Wallet, Settings, Menu, X, Copy, CheckCircle, IndianRupee, Plus, Layout, Trophy
 } from 'lucide-react';
+import Leaderboard from '../components/Leaderboard';
 import toast from 'react-hot-toast';
 import Tree from 'react-d3-tree';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
+import NotificationBell from '../components/NotificationBell';
+import ThemeToggle from '../components/ThemeToggle';
+
 
 const Sidebar = ({ active, setActive, sidebarOpen, setSidebarOpen }) => {
   const { user, logout } = useAuth();
@@ -18,31 +23,30 @@ const Sidebar = ({ active, setActive, sidebarOpen, setSidebarOpen }) => {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'referrals', label: 'My Referrals', icon: Users },
     { id: 'tree', label: 'Referral Tree', icon: Link2 },
-    { id: 'admissions', label: 'Admissions', icon: BookOpen },
+    { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
     { id: 'earnings', label: 'Earnings', icon: Wallet },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   return (
     <>
-      {/* Overlay */}
-      {sidebarOpen && (
-      <div
-        onClick={() => setSidebarOpen(false)}
-        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 40 }}
-        className="md:hidden block"
-      />
-      )}
-      <aside className="sidebar" style={{ transform: sidebarOpen ? 'translateX(0)' : undefined }}>
+      {/* Sidebar overlay */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 40 }} className="lg:hidden" />
+        )}
+      </AnimatePresence>
+
+      <aside className="sidebar" style={{ transform: sidebarOpen ? 'translateX(0)' : undefined, width: 'var(--sidebar-width)', transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}>
         {/* Logo */}
-        <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+        <div style={{ padding: 'var(--space-card)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Monitor size={20} color="white" />
             </div>
             <div>
               <div style={{ color: 'white', fontWeight: '800', fontFamily: 'Outfit', fontSize: '1rem' }}>IGCIM</div>
-              <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.6rem', letterSpacing: '0.08em' }}>COMPUTER CENTRE</div>
+              <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.6rem', letterSpacing: '0.08em' }} className="hidden xs:block">COMPUTER CENTRE</div>
             </div>
           </div>
         </div>
@@ -93,7 +97,8 @@ export default function StudentDashboard() {
   const [withdrawModal, setWithdrawModal] = useState(false);
   const [withdrawForm, setWithdrawForm] = useState({ amount: '', upi_id: '' });
   const [withdrawLoading, setWithdrawLoading] = useState(false);
-  
+  const [withdrawals, setWithdrawals] = useState([]);
+
   // Admission Modal State
   const [showAdmissionModal, setShowAdmissionModal] = useState(false);
   const [courses, setCourses] = useState([]);
@@ -103,17 +108,40 @@ export default function StudentDashboard() {
 
   const [loading, setLoading] = useState(true);
 
+  // Tree Centering Logic
+  const treeContainerRef = useRef(null);
+  const [treeTranslate, setTreeTranslate] = useState({ x: 200, y: 80 });
+  const [treeDims, setTreeDims] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    if (active !== 'tree' || !treeContainerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          setTreeDims({ width, height });
+          setTreeTranslate({ x: width / 2, y: 80 });
+        }
+      }
+    });
+
+    observer.observe(treeContainerRef.current);
+    return () => observer.disconnect();
+  }, [active, referralTree]);
+
   useEffect(() => {
     const load = async () => {
       try {
-        const [dash, statsRes, earn, refs, tree, adms, crs] = await Promise.all([
+        const [dash, statsRes, earn, refs, tree, adms, crs, withdrawalsRes] = await Promise.all([
           api.get('/dashboard/student'),
           api.get('/dashboard/stats'),
           api.get('/commissions/summary'),
           api.get('/referrals/stats'),
           api.get('/referrals/tree'),
           api.get('/admissions?limit=50'),
-          api.get('/courses') // public list
+          api.get('/courses'), // public list
+          api.get('/commissions/withdrawals?limit=50')
         ]);
         setData(dash.data.data);
         setStats(statsRes.data.data);
@@ -122,6 +150,7 @@ export default function StudentDashboard() {
         setReferralTree(tree.data.data);
         setAdmissions(adms.data.data || []);
         setCourses(crs.data.data || []);
+        setWithdrawals(withdrawalsRes.data.data || []);
       } catch (err) {
         console.error('Dashboard load error', err);
       } finally {
@@ -143,6 +172,8 @@ export default function StudentDashboard() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+
+
   // Convert referral tree to react-d3-tree format
   const toTreeData = (node) => ({
     name: node.full_name || node.root?.full_name || 'You',
@@ -156,6 +187,13 @@ export default function StudentDashboard() {
 
   const stat = data?.referrals || {};
   const earn = data?.earnings || {};
+
+  const conversionRate = stats?.total_referrals > 0 ? Math.round(((stats.total_admissions || 0) / stats.total_referrals) * 100) : 0;
+  const funnelData = [
+    { name: 'Approved', count: stats?.total_admissions || 0, fill: '#10b981' },
+    { name: 'Pending', count: stats?.total_leads || 0, fill: '#f59e0b' },
+    { name: 'Total Referrals', count: stats?.total_referrals || 0, fill: '#00B4D8' }
+  ];
 
   const handleAdmissionSubmit = async (e) => {
     e.preventDefault();
@@ -191,140 +229,149 @@ export default function StudentDashboard() {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#F0F4FF' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', width: '100%', maxWidth: '100vw' }}>
       <Sidebar active={active} setActive={setActive} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
       <main className="main-content">
         {/* Top bar */}
-        <div style={{ background: 'white', borderBottom: '1px solid rgba(10,36,99,0.08)', padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', position: 'sticky', top: 0, zIndex: 30 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <button onClick={() => setSidebarOpen(o => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#0A2463', padding: '0.25rem' }}>
+        <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', position: 'sticky', top: 0, zIndex: 30, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <button onClick={() => setSidebarOpen(o => !o)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-primary)', padding: '0.25rem' }} className="lg:hidden">
               <Menu size={22} />
             </button>
             <div>
-              <div style={{ fontWeight: '700', color: '#0A2463', fontSize: '1rem', fontFamily: 'Outfit' }}>
-                {active === 'dashboard' ? 'Dashboard' : active === 'referrals' ? 'My Referrals' : active === 'tree' ? 'Referral Tree' : active === 'earnings' ? 'Earnings' : active.charAt(0).toUpperCase() + active.slice(1)}
+              <div style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.9rem', fontFamily: 'Outfit' }}>
+                {active === 'dashboard' ? 'Dashboard' : active === 'referrals' ? 'My Referrals' : active === 'tree' ? 'Referral Tree' : active === 'leaderboard' ? 'Leaderboard' : active === 'earnings' ? 'Earnings' : active.charAt(0).toUpperCase() + active.slice(1)}
               </div>
-              <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Welcome back, {user?.fullName?.split(' ')[0]}</div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }} className="hidden sm:block">Welcome back, {user?.fullName?.split(' ')[0]}</div>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             {user?.role === 'co-admin' && (
-              <button onClick={() => window.location.href = '/dashboard/admin'} className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', fontSize: '0.8rem' }}>
-                🛡️ Admin View
+              <button onClick={() => window.location.href = '/dashboard/admin'} className="btn-outline hidden md:flex" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.75rem', fontSize: '0.75rem' }}>
+                <Layout size={14} color="#ef4444" />
+                Admin
               </button>
             )}
-            <div style={{ background: '#F0F4FF', border: '1px solid rgba(10,36,99,0.1)', borderRadius: '10px', padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>Code:</span>
-              <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#0A2463' }}>{user?.referralCode}</span>
-              <button onClick={copyReferralCode} style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? '#10b981' : '#00B4D8', display: 'flex', alignItems: 'center' }}>
-                {copied ? <CheckCircle size={14} /> : <Copy size={14} />}
+            <ThemeToggle />
+            <NotificationBell scope="student" />
+            <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.4rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }} className="hidden sm:flex">
+              <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-primary)' }}>{user?.referralCode}</span>
+              <button onClick={copyReferralCode} style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? '#10b981' : 'var(--accent)', display: 'flex', alignItems: 'center' }}>
+                {copied ? <CheckCircle size={13} /> : <Copy size={13} />}
               </button>
             </div>
           </div>
         </div>
 
-        <div style={{ padding: '1.5rem' }}>
+        <div style={{ padding: 'var(--space-page)' }}>
           {loading ? (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
-              <div className="spinner" style={{ width: '40px', height: '40px', borderColor: 'rgba(10,36,99,0.2)', borderTopColor: '#0A2463' }} />
+              <div className="spinner" style={{ width: '40px', height: '40px', borderColor: 'var(--border)', borderTopColor: 'var(--text-primary)' }} />
             </div>
           ) : (
             <>
-              {(active === 'dashboard' || active === 'referrals') && (
+              {active === 'dashboard' && (
                 <>
                   {/* Stat Cards */}
                   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                    style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+                    style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
                     {[
-                      { label: 'Total Referrals', value: stats?.total_referrals || 0, icon: Users, color: '#0A2463', sub: 'Registered students' },
-                      { label: 'Leads (Pending)', value: stats?.total_leads || 0, icon: Clock, color: '#f59e0b', sub: `Pending Approval` },
+                      { label: 'Total Referrals', value: stats?.total_referrals || 0, icon: Users, color: 'var(--primary)', sub: 'Registered students' },
+                      { label: 'Leads (Pending)', value: stats?.total_leads || 0, icon: Clock, color: 'var(--warning)', sub: `Pending Approval` },
                       { label: 'Admissions', value: stats?.total_admissions || 0, icon: CheckCircle, color: '#10b981', sub: `Approved Students` },
                       { label: 'Total Commission', value: `₹${parseFloat(stats?.total_commission || 0).toLocaleString()}`, icon: IndianRupee, color: '#F4A261', sub: `Earned so far`, gold: true },
                     ].map((s, i) => {
                       const Icon = s.icon;
                       return (
-                        <motion.div key={i} className="stat-card" style={{ background: s.gold ? 'linear-gradient(135deg, #0A2463, #1a3a8f)' : 'white' }}
+                        <motion.div key={i} className="stat-card" style={{ background: s.gold ? 'linear-gradient(135deg, var(--primary), var(--primary-dark))' : 'var(--bg-card)' }}
                           whileHover={{ y: -4 }} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
                             <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: s.gold ? 'rgba(255,255,255,0.15)' : `${s.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               <Icon size={20} color={s.gold ? '#F4A261' : s.color} />
                             </div>
                           </div>
-                          <div style={{ fontSize: '1.75rem', fontWeight: '800', color: s.gold ? 'white' : s.color, fontFamily: 'Outfit', marginBottom: '0.25rem' }}>{s.value}</div>
-                          <div style={{ fontSize: '0.8rem', fontWeight: '600', color: s.gold ? 'rgba(255,255,255,0.9)' : '#374151', marginBottom: '0.2rem' }}>{s.label}</div>
-                          <div style={{ fontSize: '0.72rem', color: s.gold ? 'rgba(255,255,255,0.55)' : '#94a3b8' }}>{s.sub}</div>
+                          <div style={{ fontSize: '1.75rem', fontWeight: '800', color: s.gold ? 'white' : 'var(--text-primary)', fontFamily: 'Outfit', marginBottom: '0.25rem' }}>{s.value}</div>
+                          <div style={{ fontSize: '0.8rem', fontWeight: '600', color: s.gold ? 'rgba(255,255,255,0.9)' : 'var(--text-secondary)', marginBottom: '0.2rem' }}>{s.label}</div>
+                          <div style={{ fontSize: '0.72rem', color: s.gold ? 'rgba(255,255,255,0.55)' : 'var(--text-secondary)' }}>{s.sub}</div>
                         </motion.div>
                       );
                     })}
                   </motion.div>
 
                   {/* Charts Row */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                      style={{ background: 'white', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(10,36,99,0.06)' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+                      style={{ background: 'var(--bg-card)', borderRadius: '16px', padding: '1.5rem', border: '1px solid var(--border)', minWidth: 0, overflow: 'hidden' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                        <h3 style={{ fontWeight: '700', color: '#0A2463', fontSize: '0.95rem' }}>Monthly Earnings</h3>
+                        <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.95rem' }}>Conversion Funnel</h3>
+                        <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: '800' }}>{conversionRate}% Win Rate</span>
+                      </div>
+                      <ResponsiveContainer width="100%" height={220}>
+                        <RadialBarChart cx="40%" cy="50%" innerRadius="30%" outerRadius="100%" barSize={12} data={funnelData} startAngle={90} endAngle={-270}>
+                          <RadialBar minAngle={15} background clockWise dataKey="count" cornerRadius={10} />
+                          <Tooltip itemStyle={{ color: 'var(--text-primary)', fontWeight: 'bold' }} contentStyle={{ borderRadius: '10px' }} />
+                          <Legend iconSize={10} layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }} />
+                        </RadialBarChart>
+                      </ResponsiveContainer>
+                    </motion.div>
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                      style={{ background: 'var(--bg-card)', borderRadius: '16px', padding: '1.5rem', border: '1px solid var(--border)', minWidth: 0, overflow: 'hidden' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                        <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.95rem' }}>Monthly Earnings</h3>
                         <span style={{ fontSize: '0.75rem', color: '#00B4D8', fontWeight: '600' }}>Last 7 months</span>
                       </div>
                       <ResponsiveContainer width="100%" height={200}>
                         <LineChart data={earnings?.monthly || []}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(10,36,99,0.06)" />
-                          <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                          <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                          <Tooltip formatter={(v) => [`₹${v}`, 'Earnings']} contentStyle={{ borderRadius: '10px', border: '1px solid rgba(10,36,99,0.1)' }} />
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                          <XAxis dataKey="month" tick={{ fontSize: 9, fill: '#94a3b8' }} />
+                          <YAxis tick={{ fontSize: 9, fill: '#94a3b8' }} />
+                          <Tooltip formatter={(v) => [`₹${v}`, 'Earnings']} contentStyle={{ borderRadius: '10px', border: '1px solid var(--border)', fontSize: '0.8rem', background: 'var(--bg-card)', color: 'var(--text-primary)' }} />
                           <Line type="monotone" dataKey="amount" stroke="#00B4D8" strokeWidth={2.5} dot={{ fill: '#00B4D8', r: 4 }} activeDot={{ r: 6 }} />
                         </LineChart>
                       </ResponsiveContainer>
                     </motion.div>
-
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-                      style={{ background: 'white', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(10,36,99,0.06)' }}>
+                      style={{ background: 'var(--bg-card)', borderRadius: '16px', padding: '1.5rem', border: '1px solid var(--border)', minWidth: 0, overflow: 'hidden' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                        <h3 style={{ fontWeight: '700', color: '#0A2463', fontSize: '0.95rem' }}>Referral Growth</h3>
+                        <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.95rem' }}>Referral Growth</h3>
                         <span style={{ fontSize: '0.75rem', color: '#00B4D8', fontWeight: '600' }}>Last 7 months</span>
                       </div>
                       <ResponsiveContainer width="100%" height={200}>
                         <BarChart data={referralStats?.monthly || []}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(10,36,99,0.06)" />
-                          <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                          <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                          <Tooltip contentStyle={{ borderRadius: '10px', border: '1px solid rgba(10,36,99,0.1)' }} />
-                          <Bar dataKey="count" fill="#0A2463" radius={[5, 5, 0, 0]} />
+                          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                          <XAxis dataKey="month" tick={{ fontSize: 9, fill: '#94a3b8' }} />
+                          <YAxis tick={{ fontSize: 9, fill: '#94a3b8' }} />
+                          <Tooltip contentStyle={{ borderRadius: '10px', border: '1px solid var(--border)', fontSize: '0.8rem', background: 'var(--bg-card)', color: 'var(--text-primary)' }} cursor={{fill: 'rgba(255,255,255,0.05)'}} />
+                          <Bar dataKey="count" fill="#3b82f6" radius={[5, 5, 0, 0]} maxBarSize={40} />
                         </BarChart>
                       </ResponsiveContainer>
                     </motion.div>
                   </div>
 
-                  {/* Bottom Row: Referrals table + Earnings Overview */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '1.25rem' }}>
-                    {/* Referrals Table */}
+                  {/* New Full Width Summary Row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.25rem' }}>
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-                      style={{ background: 'white', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(10,36,99,0.06)' }}>
+                      style={{ background: 'var(--bg-card)', borderRadius: '16px', padding: '1.5rem', border: '1px solid var(--border)', minWidth: 0, overflow: 'hidden' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                        <h3 style={{ fontWeight: '700', color: '#0A2463', fontSize: '0.95rem' }}>My Referrals</h3>
-                        <button className="btn-outline" style={{ padding: '0.4rem 0.875rem', fontSize: '0.8rem' }}>View All</button>
+                        <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.95rem' }}>Recent Referrals</h3>
+                        <button onClick={() => setActive('referrals')} className="btn-outline" style={{ padding: '0.4rem 0.875rem', fontSize: '0.8rem' }}>View All</button>
                       </div>
-                      <div style={{ overflowX: 'auto' }}>
+                      <div className="table-responsive">
                         <table className="data-table">
                           <thead>
-                            <tr>
-                              <th>Name</th>
-                              <th>System ID</th>
-                              <th>Status</th>
-                              <th>Date</th>
-                            </tr>
+                            <tr><th>Name</th><th>System ID</th><th>Status</th><th>Date</th></tr>
                           </thead>
                           <tbody>
                             {(referralStats?.recent || []).length === 0 ? (
-                              <tr><td colSpan={4} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>No referrals yet. Share your code!</td></tr>
+                              <tr><td colSpan={4} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No referrals yet. Share your code!</td></tr>
                             ) : (
-                              referralStats.recent.map(r => (
+                              referralStats.recent.slice(0, 5).map(r => (
                                 <tr key={r.id}>
-                                  <td style={{ fontWeight: '600', color: '#0A2463' }}>{r.full_name}</td>
-                                  <td style={{ fontFamily: 'monospace', color: '#64748b', fontSize: '0.8rem' }}>{r.system_id}</td>
+                                  <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{r.full_name}</td>
+                                  <td style={{ fontFamily: 'monospace', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{r.system_id}</td>
                                   <td>{getStatusBadge(r.admission_status || 'pending')}</td>
-                                  <td style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{new Date(r.created_at).toLocaleDateString()}</td>
+                                  <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{new Date(r.created_at).toLocaleDateString()}</td>
                                 </tr>
                               ))
                             )}
@@ -332,38 +379,82 @@ export default function StudentDashboard() {
                         </table>
                       </div>
                     </motion.div>
+                  </div>
+                </>
+              )}
 
-                    {/* Earnings Overview */}
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}
-                      style={{ background: 'white', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(10,36,99,0.06)', height: 'fit-content' }}>
-                      <h3 style={{ fontWeight: '700', color: '#0A2463', fontSize: '0.95rem', marginBottom: '1.25rem' }}>Earnings Overview</h3>
-                      {[
-                        { label: 'Referral Code', value: user?.referralCode, copy: true },
-                        { label: 'Available Balance', value: `₹${parseFloat(earn.pending_earnings || 0).toLocaleString()}`, color: '#00B4D8' },
-                        { label: 'Processing Payouts', value: `₹${parseFloat(earn.processing_earnings || 0).toLocaleString()}`, color: '#f59e0b' },
-                        { label: 'Total Withdrawn', value: `₹${parseFloat(earn.paid_earnings || 0).toLocaleString()}`, color: '#10b981' },
-                      ].map(item => (
-                        <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 0', borderBottom: '1px solid rgba(10,36,99,0.06)' }}>
-                          <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>{item.label}</span>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span style={{ fontSize: '0.85rem', fontWeight: '700', color: item.color || '#0A2463' }}>{item.value}</span>
-                            {item.copy && (
-                              <button onClick={copyReferralLink} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#00B4D8', fontSize: '0.75rem', fontWeight: '600' }}>
-                                {copied ? '✓' : 'Copy'}
-                              </button>
-                            )}
+              {/* === LEADERBOARD === */}
+              {active === 'leaderboard' && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                  <Leaderboard />
+                </motion.div>
+              )}
+
+              {active === 'referrals' && (
+                <>
+                  {/* Referral Specific Stats */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+                    {[
+                      { label: 'Total Referrals', value: stats?.total_referrals || 0, icon: Users, color: 'var(--text-primary)' },
+                      { label: 'Pending Approval', value: stats?.total_leads || 0, icon: Clock, color: '#f59e0b' },
+                      { label: 'Approved Admissions', value: stats?.total_admissions || 0, icon: CheckCircle, color: '#10b981' },
+                    ].map((s, i) => (
+                      <div key={i} className="stat-card" style={{ background: 'var(--bg-card)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: `${s.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <s.icon size={20} color={s.color} />
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '1.25rem', fontWeight: '800', color: s.color, fontFamily: 'Outfit' }}>{s.value}</div>
+                            <div style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--text-secondary)' }}>{s.label}</div>
                           </div>
                         </div>
-                      ))}
-                      <button onClick={() => setWithdrawModal(true)} className="btn-accent" style={{ width: '100%', justifyContent: 'center', marginTop: '1.25rem', padding: '0.75rem', fontSize: '0.875rem' }}>
-                        <Wallet size={16} /> Withdraw Funds
-                      </button>
-                    </motion.div>
+                      </div>
+                    ))}
                   </div>
+
+                  {/* Full width Table */}
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                    style={{ background: 'var(--bg-card)', borderRadius: '16px', padding: '1.5rem', border: '1px solid var(--border)', minWidth: 0, overflow: 'hidden' }}>
+                    <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '1.25rem' }}>Full Referral List</h3>
+                    <div className="table-responsive">
+                      <table className="data-table">
+                        <thead>
+                          <tr>
+                            <th>Student Name</th>
+                            <th>Contact Info</th>
+                            <th>System ID</th>
+                            <th>Status</th>
+                            <th>Date Joined</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {referralStats?.recent?.length === 0 ? (
+                            <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-secondary)' }}>No referrals found.</td></tr>
+                          ) : referralStats.recent.map(r => (
+                            <tr key={r.id}>
+                              <td>
+                                <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{r.full_name}</div>
+                                <div style={{ fontSize: '0.7rem', color: '#00B4D8' }}>ID: {r.system_id}</div>
+                              </td>
+                              <td>
+                                <div style={{ fontSize: '0.8rem', color: 'var(--text-primary)' }}>{r.mobile || '—'}</div>
+                                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{r.email || '—'}</div>
+                              </td>
+                              <td style={{ fontFamily: 'monospace' }}>{r.system_id}</td>
+                              <td>{getStatusBadge(r.admission_status || 'pending')}</td>
+                              <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{new Date(r.created_at).toLocaleDateString()}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </motion.div>
+
 
                   {/* Security notice */}
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-                    style={{ marginTop: '1.25rem', background: 'linear-gradient(135deg, #0A2463, #1a3a8f)', borderRadius: '16px', padding: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                    style={{ marginTop: '1.25rem', background: 'linear-gradient(135deg, var(--text-primary), #1a3a8f)', borderRadius: '16px', padding: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                     {[
                       { icon: '🔐', title: 'OTP Verified', sub: 'Sign-up' },
                       { icon: '✅', title: 'Admin Approved', sub: 'Admissions' },
@@ -384,20 +475,35 @@ export default function StudentDashboard() {
               {/* Referral Tree */}
               {active === 'tree' && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                  style={{ background: 'white', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(10,36,99,0.06)', height: '500px' }}>
-                  <h3 style={{ fontWeight: '700', color: '#0A2463', marginBottom: '1rem' }}>Referral Network Tree</h3>
+                  style={{ background: 'var(--bg-card)', borderRadius: '16px', padding: '1.5rem', border: '1px solid var(--border)', minWidth: 0, overflow: 'hidden', height: '500px', display: 'flex', flexDirection: 'column' }}>
+                  <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '1rem', flexShrink: 0 }}>Referral Network Tree</h3>
                   {referralTree ? (
-                    <Tree
-                      data={toTreeData(referralTree)}
-                      orientation="vertical"
-                      translate={{ x: 400, y: 80 }}
-                      styles={{
-                        nodes: { node: { circle: { fill: '#0A2463' }, name: { fill: '#0A2463', fontSize: 12 } }, leafNode: { circle: { fill: '#00B4D8' }, name: { fill: '#00B4D8', fontSize: 11 } } },
-                        links: { stroke: '#00B4D8' },
-                      }}
-                    />
+                    <div ref={treeContainerRef} style={{ flex: 1, minHeight: 0, width: '100%', position: 'relative' }}>
+                      {treeDims.width > 0 && (
+                        <Tree
+                          data={toTreeData(referralTree)}
+                          orientation="vertical"
+                          translate={treeTranslate}
+                          dimensions={treeDims}
+                          pathFunc="step"
+                          renderCustomNodeElement={({ nodeDatum, toggleNode }) => (
+                            <g>
+                              <circle r="12" fill={nodeDatum.children?.length > 0 ? "#3b82f6" : "#10b981"} onClick={toggleNode} stroke="var(--bg-card)" strokeWidth="2" style={{ cursor: 'pointer' }} />
+                              <text fill="var(--text-primary)" strokeWidth="0" x="18" dy="4" fontSize="13px" fontWeight="700">
+                                {nodeDatum.name}
+                              </text>
+                              {nodeDatum.attributes?.ID && (
+                                <text fill="var(--text-secondary)" x="18" dy="18" fontSize="11px">
+                                  ID: {nodeDatum.attributes.ID}
+                                </text>
+                              )}
+                            </g>
+                          )}
+                        />
+                      )}
+                    </div>
                   ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80%', color: '#94a3b8' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80%', color: 'var(--text-secondary)' }}>
                       No referral data yet. Start sharing your code!
                     </div>
                   )}
@@ -407,28 +513,28 @@ export default function StudentDashboard() {
               {/* Admissions */}
               {active === 'admissions' && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                  style={{ background: 'white', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(10,36,99,0.06)' }}>
+                  style={{ background: 'var(--bg-card)', borderRadius: '16px', padding: '1.5rem', border: '1px solid var(--border)', minWidth: 0, overflow: 'hidden' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                    <h3 style={{ fontWeight: '700', color: '#0A2463' }}>My Admissions</h3>
+                    <h3 style={{ fontWeight: '700', color: 'var(--text-primary)' }}>My Admissions</h3>
                     <button onClick={() => setShowAdmissionModal(true)} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
                       <Plus size={16} /> Apply for Course
                     </button>
                   </div>
-                  <div style={{ overflowX: 'auto' }}>
+                  <div className="table-responsive">
                     <table className="data-table">
                       <thead>
                         <tr><th>Course</th><th>Fee</th><th>Status</th><th>Mode</th><th>Date</th></tr>
                       </thead>
                       <tbody>
                         {admissions.length === 0 ? (
-                          <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>No admissions found.</td></tr>
+                          <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No admissions found.</td></tr>
                         ) : admissions.map(a => (
                           <tr key={a.id}>
-                            <td style={{ fontWeight: '600', color: '#0A2463' }}>{a.course_name}</td>
+                            <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{a.course_name}</td>
                             <td>₹{parseFloat(a.snapshot_fee).toLocaleString()}</td>
                             <td>{getStatusBadge(a.status)}</td>
                             <td><span className="badge badge-info">{a.admission_mode || 'offline'}</span></td>
-                            <td style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{new Date(a.created_at).toLocaleDateString()}</td>
+                            <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{new Date(a.created_at).toLocaleDateString()}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -439,20 +545,20 @@ export default function StudentDashboard() {
 
               {/* Earnings */}
               {active === 'earnings' && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                  <div style={{ background: 'white', borderRadius: '16px', padding: '1.5rem' }}>
-                    <h3 style={{ fontWeight: '700', color: '#0A2463', marginBottom: '1.25rem' }}>Commission History</h3>
-                    <div style={{ background: '#F0F4FF', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.25rem' }}>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', minWidth: 0, overflow: 'hidden' }}>
+                  <div style={{ background: 'var(--bg-card)', borderRadius: '16px', padding: '1.5rem', minWidth: 0, overflow: 'hidden' }}>
+                    <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '1.25rem' }}>Commission History</h3>
+                    <div style={{ background: 'var(--bg)', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.25rem' }}>
                       <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
                         {[
-                          { label: 'Total Earned', value: `₹${parseFloat(earn.total_earnings || 0).toLocaleString()}`, color: '#0A2463' },
-                          { label: 'Available', value: `₹${parseFloat(earn.pending_earnings || 0).toLocaleString()}`, color: '#00B4D8' },
-                          { label: 'Processing', value: `₹${parseFloat(earn.processing_earnings || 0).toLocaleString()}`, color: '#f59e0b' },
-                          { label: 'Withdrawn', value: `₹${parseFloat(earn.paid_earnings || 0).toLocaleString()}`, color: '#10b981' },
+                          { label: 'Total Earned', value: `₹${parseFloat(earnings?.summary?.total_earnings || 0).toLocaleString()}`, color: '#3b82f6' },
+                          { label: 'Available', value: `₹${parseFloat(earnings?.summary?.pending_earnings || 0).toLocaleString()}`, color: '#00B4D8' },
+                          { label: 'Processing', value: `₹${parseFloat(earnings?.summary?.processing_earnings || 0).toLocaleString()}`, color: '#f59e0b' },
+                          { label: 'Withdrawn', value: `₹${parseFloat(earnings?.summary?.paid_earnings || 0).toLocaleString()}`, color: '#10b981' },
                         ].map(s => (
                           <div key={s.label}>
                             <div style={{ fontSize: '1.5rem', fontWeight: '800', color: s.color, fontFamily: 'Outfit' }}>{s.value}</div>
-                            <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>{s.label}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '500' }}>{s.label}</div>
                           </div>
                         ))}
                       </div>
@@ -460,6 +566,36 @@ export default function StudentDashboard() {
                     <button onClick={() => setWithdrawModal(true)} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem' }}>
                       <Wallet size={16} /> Request Withdrawal
                     </button>
+                    
+                    <div style={{ marginTop: '2rem' }}>
+                      <h4 style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.9rem', marginBottom: '1rem' }}>Withdrawal History</h4>
+                      <div className="table-responsive">
+                        <table className="data-table">
+                          <thead>
+                            <tr><th>Amount</th><th>Status</th><th>Date</th><th>Receipt</th></tr>
+                          </thead>
+                          <tbody>
+                            {withdrawals.length === 0 ? (
+                              <tr><td colSpan={4} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No withdrawals yet.</td></tr>
+                            ) : withdrawals.map(w => (
+                              <tr key={w.id}>
+                                <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>₹{parseFloat(w.amount).toLocaleString()}</td>
+                                <td>{getStatusBadge(w.status)}</td>
+                                <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{new Date(w.created_at).toLocaleDateString()}</td>
+                                <td>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    <Clock size={12} style={{ color: w.status === 'paid' ? '#10b981' : '#f59e0b' }} />
+                                    <span style={{ fontSize: '0.75rem', fontWeight: '500', color: w.status === 'paid' ? '#10b981' : 'var(--text-secondary)' }}>
+                                      {w.status === 'paid' ? 'Processed' : 'Awaiting Payout'}
+                                    </span>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -470,8 +606,8 @@ export default function StudentDashboard() {
                   style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
                   {/* Profile Info */}
-                  <div style={{ background: 'white', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(10,36,99,0.06)' }}>
-                    <h3 style={{ fontWeight: '700', color: '#0A2463', fontSize: '1rem', marginBottom: '1.25rem', fontFamily: 'Outfit' }}>👤 My Profile</h3>
+                  <div style={{ background: 'var(--bg-card)', borderRadius: '16px', padding: '1.5rem', border: '1px solid var(--border)' }}>
+                    <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '1rem', marginBottom: '1.25rem', fontFamily: 'Outfit' }}>👤 My Profile</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
                       {[
                         { label: 'Full Name', value: user?.fullName },
@@ -481,25 +617,25 @@ export default function StudentDashboard() {
                         { label: 'Role', value: user?.role?.replace('_', ' ').toUpperCase() },
                         { label: 'Referral Code', value: user?.referralCode },
                       ].map(field => (
-                        <div key={field.label} style={{ background: '#F8FAFF', borderRadius: '10px', padding: '0.875rem 1rem', border: '1px solid rgba(10,36,99,0.07)' }}>
-                          <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.35rem' }}>{field.label}</div>
-                          <div style={{ fontSize: '0.9rem', fontWeight: '600', color: '#0A2463' }}>{field.value || '—'}</div>
+                        <div key={field.label} style={{ background: 'var(--bg)', borderRadius: '10px', padding: '0.875rem 1rem', border: '1px solid var(--border)' }}>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.35rem' }}>{field.label}</div>
+                          <div style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-primary)' }}>{field.value || '—'}</div>
                         </div>
                       ))}
                     </div>
                   </div>
 
                   {/* Change Password */}
-                  <div style={{ background: 'white', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(10,36,99,0.06)' }}>
-                    <h3 style={{ fontWeight: '700', color: '#0A2463', fontSize: '1rem', marginBottom: '0.5rem', fontFamily: 'Outfit' }}>🔐 Change Password</h3>
-                    <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '1.25rem' }}>Reset your password securely using OTP sent to your email.</p>
+                  <div style={{ background: 'var(--bg-card)', borderRadius: '16px', padding: '1.5rem', border: '1px solid var(--border)' }}>
+                    <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '1rem', marginBottom: '0.5rem', fontFamily: 'Outfit' }}>🔐 Change Password</h3>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>Reset your password securely using OTP sent to your email.</p>
                     <a href="/forgot-password" className="btn-outline" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 1.25rem', textDecoration: 'none', fontSize: '0.875rem' }}>
                       🔑 Reset Password via OTP
                     </a>
                   </div>
 
                   {/* Share Referral */}
-                  <div style={{ background: 'linear-gradient(135deg, #0A2463, #1a3a8f)', borderRadius: '16px', padding: '1.5rem' }}>
+                  <div style={{ background: 'linear-gradient(135deg, var(--text-primary), #1a3a8f)', borderRadius: '16px', padding: '1.5rem' }}>
                     <h3 style={{ fontWeight: '700', color: 'white', fontSize: '1rem', marginBottom: '0.5rem', fontFamily: 'Outfit' }}>🔗 Share Your Referral Link</h3>
                     <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', marginBottom: '1.25rem' }}>Share this link to earn commission when friends enroll.</p>
                     <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: '10px', padding: '0.75rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
@@ -513,9 +649,9 @@ export default function StudentDashboard() {
                   </div>
 
                   {/* Logout */}
-                  <div style={{ background: 'white', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(239,68,68,0.15)' }}>
+                  <div style={{ background: 'var(--bg-card)', borderRadius: '16px', padding: '1.5rem', border: '1px solid rgba(239,68,68,0.15)' }}>
                     <h3 style={{ fontWeight: '700', color: '#dc2626', fontSize: '1rem', marginBottom: '0.5rem', fontFamily: 'Outfit' }}>🚪 Sign Out</h3>
-                    <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '1.25rem' }}>You will be signed out and redirected to the login page.</p>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>You will be signed out and redirected to the login page.</p>
                     <button onClick={logout} style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px', padding: '0.625rem 1.25rem', color: '#dc2626', fontWeight: '600', fontSize: '0.875rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
                       <LogOut size={16} /> Sign Out
                     </button>
@@ -531,10 +667,10 @@ export default function StudentDashboard() {
       {withdrawModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-            style={{ background: 'white', borderRadius: '20px', padding: '2rem', width: '100%', maxWidth: '420px' }}>
+            style={{ background: 'var(--bg-card)', borderRadius: '20px', padding: '2rem', width: 'min(95%, 420px)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h3 style={{ fontWeight: '800', color: '#0A2463', fontSize: '1.1rem', fontFamily: 'Outfit' }}>Withdraw Funds</h3>
-              <button onClick={() => setWithdrawModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}><X size={20} /></button>
+              <h3 style={{ fontWeight: '800', color: 'var(--text-primary)', fontSize: '1.1rem', fontFamily: 'Outfit' }}>Withdraw Funds</h3>
+              <button onClick={() => setWithdrawModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}><X size={20} /></button>
             </div>
             <form onSubmit={async (e) => {
               e.preventDefault();
@@ -575,17 +711,17 @@ export default function StudentDashboard() {
       {/* OVERLAYS/MODALS MUST BE OUTSIDE MAIN CONTENT */}
       {showAdmissionModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,36,99,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1rem' }}>
-          <div style={{ background: 'white', borderRadius: '20px', width: '100%', maxWidth: '500px', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
-            <div style={{ padding: '1.5rem', borderBottom: '1px solid rgba(10,36,99,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F8FAFF' }}>
-              <h3 style={{ fontWeight: '800', color: '#0A2463', fontSize: '1.2rem', fontFamily: 'Outfit' }}>Online Admission</h3>
-              <button onClick={() => setShowAdmissionModal(false)} style={{ background: 'white', border: '1px solid #e2e8f0', width: '30px', height: '30px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: '20px', width: 'min(95%, 500px)', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+            <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg)' }}>
+              <h3 style={{ fontWeight: '800', color: 'var(--text-primary)', fontSize: '1.2rem', fontFamily: 'Outfit' }}>Online Admission</h3>
+              <button onClick={() => setShowAdmissionModal(false)} style={{ background: 'var(--bg-card)', border: '1px solid #e2e8f0', width: '30px', height: '30px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-secondary)' }}>
                 <X size={16} />
               </button>
             </div>
             <form onSubmit={handleAdmissionSubmit} style={{ padding: '1.5rem' }}>
               
               <div style={{ marginBottom: '1.25rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: '600', color: '#334155' }}>Select Course <span style={{ color: 'red' }}>*</span></label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-primary)' }}>Select Course <span style={{ color: 'red' }}>*</span></label>
                 <select className="form-input" required value={admissionForm.course_id} onChange={e => setAdmissionForm({ ...admissionForm, course_id: e.target.value })}>
                   <option value="">-- Choose a Course --</option>
                   {courses.filter(c => c.is_active).map(c => (
@@ -596,7 +732,7 @@ export default function StudentDashboard() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: '600', color: '#334155' }}>Payment Mode</label>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-primary)' }}>Payment Mode</label>
                   <select className="form-input" value={admissionForm.payment_mode} onChange={e => setAdmissionForm({ ...admissionForm, payment_mode: e.target.value })}>
                     <option value="upi">UPI</option>
                     <option value="netbanking">Net Banking</option>
@@ -604,15 +740,15 @@ export default function StudentDashboard() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: '600', color: '#334155' }}>Txn Reference ID <span style={{ color: 'red' }}>*</span></label>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-primary)' }}>Txn Reference ID <span style={{ color: 'red' }}>*</span></label>
                   <input type="text" className="form-input" required placeholder="UTR / Ref No." value={admissionForm.payment_reference} onChange={e => setAdmissionForm({ ...admissionForm, payment_reference: e.target.value })} />
                 </div>
               </div>
 
               <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: '600', color: '#334155' }}>Payment Receipt Image (Optional)</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-primary)' }}>Payment Receipt Image (Optional)</label>
                 <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '10px', padding: '1rem', textAlign: 'center' }}>
-                  <input type="file" accept="image/*" onChange={e => setAdmissionForm({ ...admissionForm, payment_proof: e.target.files[0] })} style={{ fontSize: '0.8rem', color: '#64748b' }} />
+                  <input type="file" accept="image/*" onChange={e => setAdmissionForm({ ...admissionForm, payment_proof: e.target.files[0] })} style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }} />
                 </div>
               </div>
 
