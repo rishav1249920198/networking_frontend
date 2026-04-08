@@ -70,11 +70,11 @@ export default function LoginPage() {
           </div>
           <h2 style={{ fontSize: '2.5rem', fontWeight: '900', fontFamily: 'Outfit, sans-serif', marginBottom: '1rem', lineHeight: 1.2 }}>Welcome Back!</h2>
           <p style={{ color: 'rgba(255,255,255,0.7)', maxWidth: '380px', lineHeight: 1.75, marginBottom: '2.5rem' }}>
-            Log in to access your dashboard, track referrals, and manage your earnings in real-time.
+            Log in to access your dashboard, track referrals, and manage your rewards in real-time.
           </p>
           {[
-            'Real-time referral tracking',
-            'Instant commission updates',
+            'Real-time reward tracking',
+            'Instant point updates',
             'Secure OTP-verified account',
           ].map(item => (
             <div key={item} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>

@@ -96,11 +96,11 @@ const Leaderboard = () => {
               </div>
 
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  ₹{item.total_earned.toLocaleString()}
+                <div style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <ICIcon size={14} /> {item.total_earned.toLocaleString()}
                 </div>
                 <div style={{ fontSize: '0.65rem', color: '#10b981', fontWeight: '700', textTransform: 'uppercase' }}>
-                  Commission
+                  Reward Points
                 </div>
               </div>
             </motion.div>

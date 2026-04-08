@@ -3,6 +3,7 @@ import { Bell, BellDot, Check, Clock, UserPlus, IndianRupee, Wallet } from 'luci
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/client';
 import { formatDistanceToNow } from 'date-fns';
+import ICIcon from './ICIcon';
 
 const NotificationBell = ({ scope = 'student' }) => {
   const [notifications, setNotifications] = useState([]);
@@ -59,7 +60,7 @@ const NotificationBell = ({ scope = 'student' }) => {
   const getIcon = (type) => {
     switch (type) {
       case 'referral': return <UserPlus size={16} color="#00B4D8" />;
-      case 'commission_credit': return <IndianRupee size={16} color="#10b981" />;
+      case 'commission_credit': return <ICIcon size={16} />;
       case 'admission_request': return <Clock size={16} color="#f59e0b" />;
       case 'admission_update': return <Check size={16} color="#10b981" />;
       case 'withdrawal_request': return <Wallet size={16} color="#f59e0b" />;

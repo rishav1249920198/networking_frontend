@@ -15,6 +15,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 import NotificationBell from '../components/NotificationBell';
 import ThemeToggle from '../components/ThemeToggle';
+import ICIcon from '../components/ICIcon';
 
 
 const Sidebar = ({ active, setActive, sidebarOpen, setSidebarOpen }) => {
@@ -105,6 +106,7 @@ export default function StudentDashboard() {
   const [admissionForm, setAdmissionForm] = useState({
     course_id: '', payment_mode: 'upi', payment_reference: '', payment_proof: null
   });
+  const [settings, setSettings] = useState({ ic_conversion_rate: '1.0' });
 
   const [loading, setLoading] = useState(true);
 
@@ -141,7 +143,8 @@ export default function StudentDashboard() {
           api.get('/referrals/tree'),
           api.get('/admissions?limit=50'),
           api.get('/courses'), // public list
-          api.get('/commissions/withdrawals?limit=50')
+          api.get('/commissions/withdrawals?limit=50'),
+          api.get('/settings')
         ]);
         setData(dash.data.data);
         setStats(statsRes.data.data);
@@ -151,6 +154,7 @@ export default function StudentDashboard() {
         setAdmissions(adms.data.data || []);
         setCourses(crs.data.data || []);
         setWithdrawals(withdrawalsRes.data.data || []);
+        if (responses[8]) setSettings(responses[8].data.data || { ic_conversion_rate: '1.0' });
       } catch (err) {
         console.error('Dashboard load error', err);
       } finally {
@@ -280,7 +284,11 @@ export default function StudentDashboard() {
                       { label: 'Total Referrals', value: stats?.total_referrals || 0, icon: Users, color: 'var(--primary)', sub: 'Registered students' },
                       { label: 'Leads (Pending)', value: stats?.total_leads || 0, icon: Clock, color: 'var(--warning)', sub: `Pending Approval` },
                       { label: 'Admissions', value: stats?.total_admissions || 0, icon: CheckCircle, color: '#10b981', sub: `Approved Students` },
-                      { label: 'Total Commission', value: `₹${parseFloat(stats?.total_commission || 0).toLocaleString()}`, icon: IndianRupee, color: '#F4A261', sub: `Earned so far`, gold: true },
+                      { label: 'Total Reward Points', value: (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}>
+                          <ICIcon size={24} /> {parseFloat(stats?.total_commission || 0).toLocaleString()}
+                        </div>
+                      ), icon: Coins, color: '#F4A261', sub: `Earnings (IC)`, gold: true },
                     ].map((s, i) => {
                       const Icon = s.icon;
                       return (
@@ -326,7 +334,20 @@ export default function StudentDashboard() {
                           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                           <XAxis dataKey="month" tick={{ fontSize: 9, fill: '#94a3b8' }} />
                           <YAxis tick={{ fontSize: 9, fill: '#94a3b8' }} />
-                          <Tooltip formatter={(v) => [`₹${v}`, 'Earnings']} contentStyle={{ borderRadius: '10px', border: '1px solid var(--border)', fontSize: '0.8rem', background: 'var(--bg-card)', color: 'var(--text-primary)' }} />
+                          <YAxis tick={{ fontSize: 9, fill: '#94a3b8' }} />
+                          <Tooltip content={(props) => {
+                            if (props.active && props.payload && props.payload.length) {
+                              return (
+                                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', padding: '0.5rem', borderRadius: '8px', fontSize: '0.75rem' }}>
+                                  <div style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>{props.label}</div>
+                                  <div style={{ color: '#00B4D8', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                    <ICIcon size={12} /> {props.payload[0].value}
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }} />
                           <Line type="monotone" dataKey="amount" stroke="#00B4D8" strokeWidth={2.5} dot={{ fill: '#00B4D8', r: 4 }} activeDot={{ r: 6 }} />
                         </LineChart>
                       </ResponsiveContainer>
@@ -551,10 +572,22 @@ export default function StudentDashboard() {
                     <div style={{ background: 'var(--bg)', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.25rem' }}>
                       <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
                         {[
-                          { label: 'Total Earned', value: `₹${parseFloat(earnings?.summary?.total_earnings || 0).toLocaleString()}`, color: '#3b82f6' },
-                          { label: 'Available', value: `₹${parseFloat(earnings?.summary?.pending_earnings || 0).toLocaleString()}`, color: '#00B4D8' },
-                          { label: 'Processing', value: `₹${parseFloat(earnings?.summary?.processing_earnings || 0).toLocaleString()}`, color: '#f59e0b' },
-                          { label: 'Withdrawn', value: `₹${parseFloat(earnings?.summary?.paid_earnings || 0).toLocaleString()}`, color: '#10b981' },
+                          { label: 'Total IC', value: (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <ICIcon size={24} /> {parseFloat(earnings?.summary?.total_earnings || 0).toLocaleString()}
+                            </div>
+                          ), color: '#3b82f6' },
+                          { label: 'Balance (IC)', value: (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <ICIcon size={24} /> {parseFloat(earnings?.summary?.pending_earnings || 0).toLocaleString()}
+                            </div>
+                          ), color: '#00B4D8' },
+                          { label: 'Converted INR', value: `₹${parseFloat((earnings?.summary?.pending_earnings || 0) * settings.ic_conversion_rate).toLocaleString()}`, color: '#10b981' },
+                          { label: 'Withdrawn', value: (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <ICIcon size={24} /> {parseFloat(earnings?.summary?.paid_earnings || 0).toLocaleString()}
+                            </div>
+                          ), color: '#ef4444' },
                         ].map(s => (
                           <div key={s.label}>
                             <div style={{ fontSize: '1.5rem', fontWeight: '800', color: s.color, fontFamily: 'Outfit' }}>{s.value}</div>
@@ -579,7 +612,12 @@ export default function StudentDashboard() {
                               <tr><td colSpan={4} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No withdrawals yet.</td></tr>
                             ) : withdrawals.map(w => (
                               <tr key={w.id}>
-                                <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>₹{parseFloat(w.amount).toLocaleString()}</td>
+                                <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                    <ICIcon size={14} /> {parseFloat(w.amount).toLocaleString()}
+                                  </div>
+                                  <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 'normal' }}>₹{parseFloat(w.inr_amount).toLocaleString()}</div>
+                                </td>
                                 <td>{getStatusBadge(w.status)}</td>
                                 <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{new Date(w.created_at).toLocaleDateString()}</td>
                                 <td>
@@ -689,9 +727,19 @@ export default function StudentDashboard() {
               }
             }}>
               <div style={{ marginBottom: '1rem' }}>
-                <label className="form-label">Amount (₹)</label>
-                <input type="number" className="form-input" placeholder="Enter amount" min={1} max={parseFloat(earn?.pending_earnings || 0)} required
-                  value={withdrawForm.amount} onChange={e => setWithdrawForm({ ...withdrawForm, amount: e.target.value })} />
+                <label className="form-label">Amount (IC Credits)</label>
+                <div style={{ position: 'relative' }}>
+                  <div style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }}>
+                    <ICIcon size={18} />
+                  </div>
+                  <input type="number" className="form-input" style={{ paddingLeft: '3rem' }} placeholder="Enter points" min={1} max={parseFloat(earn?.pending_earnings || 0)} required
+                    value={withdrawForm.amount} onChange={e => setWithdrawForm({ ...withdrawForm, amount: e.target.value })} />
+                </div>
+                {withdrawForm.amount && (
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#10b981', fontWeight: '600' }}>
+                     ≈ ₹{parseFloat(withdrawForm.amount * settings.ic_conversion_rate).toLocaleString()}
+                  </div>
+                )}
               </div>
               <div style={{ marginBottom: '1.5rem' }}>
                 <label className="form-label">UPI ID</label>

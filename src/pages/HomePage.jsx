@@ -41,7 +41,7 @@ export default function HomePage() {
     { icon: <Users size={28} />, title: 'Share Referral Code', desc: 'Get your unique IGCIM referral code after registration and share it with friends and family.', color: '#0A2463' },
     { icon: <GraduationCap size={28} />, title: 'Admission', desc: 'Referred student enrolls online or offline using your code. Admission goes for review.', color: '#00B4D8' },
     { icon: <Shield size={28} />, title: 'Admin Approved', desc: 'Our admin team verifies the admission ensuring accuracy and transparency.', color: '#10b981' },
-    { icon: <TrendingUp size={28} />, title: 'Earn Commission', desc: 'Commission is credited to your account only after admin approval. Withdraw anytime.', color: '#F4A261' },
+    { icon: <TrendingUp size={28} />, title: 'Earn IGCIM Credits', desc: 'Earn branded IC credits for every successful admission through your code. High conversion rates.', color: '#F4A261' },
   ];
 
   const security = [
@@ -79,12 +79,12 @@ export default function HomePage() {
               <span className="gradient-text" style={{ filter: 'brightness(1.5)', color: '#00B4D8' }}>
                 Education
               </span>
-              {' '}&amp; Earnings
+              {' '}&amp; Rewards
             </motion.h1>
 
             <motion.p variants={fadeUp} style={{ color: 'rgba(255,255,255,0.85)', lineHeight: 1.75, marginBottom: '2.5rem', maxWidth: '600px' }}>
-              Join IGCIM and refer students to earn commissions while they learn.
-              The most trusted, secure and future-ready computer education network in India.
+              Join IGCIM and refer students to earn Reward Points (IC) while they learn.
+              The most trusted, secure and gamified computer education network in India.
             </motion.p>
 
             <motion.div variants={fadeUp} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
@@ -118,8 +118,8 @@ export default function HomePage() {
                   <TrendingUp size={22} color="white" />
                 </div>
                 <div>
-                  <div style={{ color: 'white', fontWeight: '800', fontSize: '1.4rem' }}>₹12,450</div>
-                  <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', fontWeight: '500' }}>Active Earnings</div>
+                  <div style={{ color: 'white', fontWeight: '800', fontSize: '1.4rem' }}>1,250 IC</div>
+                  <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', fontWeight: '500' }}>Active Rewards</div>
                 </div>
               </div>
               {[

@@ -14,6 +14,8 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
 import NotificationBell from '../components/NotificationBell';
 import ThemeToggle from '../components/ThemeToggle';
+import ICIcon from '../components/ICIcon';
+import { Coins } from 'lucide-react';
 
 // Simple reusable skeleton loader
 const SkeletonCard = () => (
@@ -36,9 +38,11 @@ export default function AdminDashboard() {
   const [withdrawals, setWithdrawals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCourseForm, setShowCourseForm] = useState(false);
-  const [courseForm, setCourseForm] = useState({ name: '', category: 'computer', description: '', duration_months: '', fee: '', commission_percent: '10' });
-  const [editingCourse, setEditingCourse] = useState(null); // New: Tracks course being edited
-  const [enrollModal, setEnrollModal] = useState(null); // { id, full_name, referrer_name, referrer_id }
+  const [courseForm, setCourseForm] = useState({ name: '', category: 'computer', description: '', duration_months: '', fee: '', commission_percent: '10', commission_ic: '' });
+  const [editingCourse, setEditingCourse] = useState(null); 
+  const [enrollModal, setEnrollModal] = useState(null); 
+  const [settings, setSettings] = useState({ ic_conversion_rate: '1.0' });
+  const [settingsLoading, setSettingsLoading] = useState(false);
 
   const loadData = async () => {
     setLoading(true);
@@ -51,6 +55,7 @@ export default function AdminDashboard() {
         api.get('/users/students'),
         api.get('/users/pending-referrals'),
         api.get('/commissions/withdrawals?limit=50'),
+        api.get('/settings'),
       ];
       
       if (isSuperOrAdmin) reqs.push(api.get('/users'));
@@ -63,8 +68,9 @@ export default function AdminDashboard() {
       setUsers(responses[3].data.data || []);
       setPendingRefs(responses[4].data.data || []);
       setWithdrawals(responses[5].data.data || []);
-      if (isSuperOrAdmin && responses[6]) {
-        setAllUsers(responses[6].data.data || []);
+      if (responses[6]) setSettings(responses[6].data.data || { ic_conversion_rate: '1.0' });
+      if (isSuperOrAdmin && responses[7]) {
+        setAllUsers(responses[7].data.data || []);
       }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -109,7 +115,7 @@ export default function AdminDashboard() {
       
       setShowCourseForm(false);
       setEditingCourse(null);
-      setCourseForm({ name: '', category: 'computer', description: '', duration_months: '', fee: '', commission_percent: '10' });
+      setCourseForm({ name: '', category: 'computer', description: '', duration_months: '', fee: '', commission_percent: '10', commission_ic: '' });
       
       const res = await api.get('/courses');
       setCourses(res.data.data || []);
@@ -126,7 +132,8 @@ export default function AdminDashboard() {
       description: c.description || '',
       duration_months: c.duration_months || '',
       fee: c.fee,
-      commission_percent: c.commission_percent
+      commission_percent: c.commission_percent,
+      commission_ic: c.commission_ic || ''
     });
     setShowCourseForm(true);
   };
@@ -172,6 +179,19 @@ export default function AdminDashboard() {
     }
   };
 
+  const updateSettings = async (e) => {
+    e.preventDefault();
+    setSettingsLoading(true);
+    try {
+      await api.put('/settings', settings);
+      toast.success('Reward settings updated.');
+    } catch (err) {
+      toast.error('Failed to update settings.');
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
   const promoteDemoteUser = async (id, newRole) => {
     if (!window.confirm(`Are you sure you want to change this user's role to ${newRole}?`)) return;
     try {
@@ -213,6 +233,10 @@ export default function AdminDashboard() {
     { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
     { id: 'courses', label: 'Courses', icon: Settings },
   ];
+
+  if (user?.role === 'super_admin' || user?.role === 'admin') {
+    links.splice(links.length - 1, 0, { id: 'reward_settings', label: 'Reward Config', icon: Coins });
+  }
 
   if (['super_admin', 'admin'].includes(user?.role)) {
     links.push({ id: 'analytics', label: 'Analytics', icon: TrendingUp });
@@ -316,7 +340,11 @@ export default function AdminDashboard() {
                     { label: 'Total Admissions', value: stats.total || 0, icon: BookOpen, color: 'var(--primary)' },
                     { label: 'Conversion Rate', value: `${data?.conversionRate || 0}%`, icon: Target, color: 'var(--accent)' },
                     { label: 'Approved', value: stats.approved || 0, icon: CheckCircle, color: '#10b981' },
-                    { label: 'Total Commissions', value: `₹${parseFloat(commStats.total_commissions || 0).toLocaleString()}`, icon: IndianRupee, color: 'var(--accent)' },
+                    { label: 'Total Earnings', value: (
+                      <span>
+                        <ICIcon size={22} /> {parseFloat(commStats.total_commissions || 0).toLocaleString()}
+                      </span>
+                    ), icon: Coins, color: 'var(--accent)' },
                     { label: 'Total Students', value: studentStats.total_students || 0, icon: Users, color: '#8b5cf6' },
                   ].map((s, i) => {
                       const Icon = s.icon;
@@ -380,7 +408,7 @@ export default function AdminDashboard() {
                 <div className="table-responsive">
                   <table className="data-table">
                     <thead>
-                      <tr><th>Student</th><th>Course</th><th>Fee</th><th>Referrer</th><th>Mode</th><th>Status</th><th>Date</th></tr>
+                      <tr><th>Student</th><th>Course</th><th>Fee</th><th>Referrer</th><th>Reward</th><th>Mode</th><th>Status</th><th>Date</th></tr>
                     </thead>
                     <tbody>
                       {admissions.map(a => (
@@ -392,6 +420,9 @@ export default function AdminDashboard() {
                           <td>{a.course_name}</td>
                           <td style={{ fontWeight: '600' }}>₹{parseFloat(a.snapshot_fee).toLocaleString()}</td>
                           <td style={{ color: '#00B4D8', fontSize: '0.8rem' }}>{a.referrer_name || '—'}</td>
+                          <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>
+                            <ICIcon size={14} /> {a.snapshot_commission_ic || (a.snapshot_fee * a.snapshot_commission_percent / 100)}
+                          </td>
                           <td><span className="badge badge-info">{a.admission_mode}</span></td>
                           <td><span className={`badge badge-${a.status}`}>{a.status}</span></td>
                           <td style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{new Date(a.created_at).toLocaleDateString()}</td>
@@ -408,6 +439,61 @@ export default function AdminDashboard() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              </motion.div>
+            )}
+
+            {/* === REWARD SETTINGS === */}
+            {active === 'reward_settings' && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ maxWidth: '600px' }}>
+                <div style={{ background: 'var(--bg-card)', borderRadius: '20px', padding: '2rem', border: '1px solid var(--border)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+                    <div style={{ width: '50px', height: '50px', borderRadius: '15px', background: 'var(--accent)15', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Coins size={24} color="var(--accent)" />
+                    </div>
+                    <div>
+                      <h3 style={{ fontWeight: '800', color: 'var(--text-primary)', fontFamily: 'Outfit' }}>Reward Configuration</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Manage IGCIM Credits (IC) system and conversion rates.</p>
+                    </div>
+                  </div>
+
+                  <form onSubmit={updateSettings}>
+                    <div style={{ marginBottom: '2rem' }}>
+                      <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: '600', color: 'var(--text-primary)' }}>IC to INR Conversion Rate</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{ flex: 1, position: 'relative' }}>
+                          <div style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center' }}>
+                             <ICIcon size={18} />
+                             <span style={{ marginLeft: '0.5rem', fontWeight: 'bold' }}>1 IC = ₹</span>
+                          </div>
+                          <input 
+                            type="number" 
+                            step="0.01"
+                            className="form-input" 
+                            style={{ paddingLeft: '5rem' }}
+                            value={settings.ic_conversion_rate} 
+                            onChange={e => setSettings({ ...settings, ic_conversion_rate: e.target.value })} 
+                            required 
+                          />
+                        </div>
+                      </div>
+                      <p style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                        This rate defines how many Indian Rupees (₹) a student receives for each IGCIM Credit (IC) during withdrawal. 
+                        <strong> Current:</strong> 100 IC = ₹{parseFloat(settings.ic_conversion_rate * 100).toLocaleString()}.
+                      </p>
+                    </div>
+
+                    <div style={{ background: 'var(--bg)50', borderRadius: '12px', padding: '1.25rem', marginBottom: '2rem', border: '1px dashed var(--border)' }}>
+                       <h4 style={{ fontSize: '0.85rem', fontWeight: '700', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Note regarding Course Commissions</h4>
+                       <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                         You can set specific IC rewards for each course in the <strong>Courses</strong> tab. If no specific IC is set, the system will calculate it based on the course's commission percentage.
+                       </p>
+                    </div>
+
+                    <button type="submit" className="btn-primary" style={{ width: '100%', padding: '1rem' }} disabled={settingsLoading}>
+                      {settingsLoading ? 'Saving...' : 'Save Configuration'}
+                    </button>
+                  </form>
                 </div>
               </motion.div>
             )}
@@ -534,7 +620,10 @@ export default function AdminDashboard() {
                               <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{w.student_name}</div>
                               <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{w.student_system_id} | {w.mobile}</div>
                             </td>
-                            <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>₹{parseFloat(w.amount).toLocaleString()}</td>
+                             <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>
+                               <ICIcon size={16} /> {parseFloat(w.amount).toLocaleString()}
+                               <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 'normal' }}>₹{parseFloat(w.inr_amount).toLocaleString()}</div>
+                             </td>
                             <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                               {w.upi_id && <div><strong>UPI:</strong> {w.upi_id}</div>}
                               {w.bank_account && <div><strong>A/C:</strong> {w.bank_account}</div>}
@@ -630,7 +719,9 @@ export default function AdminDashboard() {
                       <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.75rem', lineHeight: 1.5 }}>{c.description || 'No description'}</p>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
                         <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>₹{parseFloat(c.fee).toLocaleString()}</span>
-                        <span style={{ color: '#00B4D8', fontWeight: '600' }}>Commission: {c.commission_percent}%</span>
+                        <span style={{ color: '#00B4D8', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                          Reward: <ICIcon size={14} /> {c.commission_ic || (c.fee * c.commission_percent / 100)}
+                        </span>
                       </div>
                       <div style={{ display: 'flex', gap: '0.4rem', borderTop: '1px solid var(--border)', paddingTop: '0.75rem' }}>
                         <button
@@ -742,7 +833,8 @@ export default function AdminDashboard() {
                 { key: 'description', label: 'Description', type: 'text', placeholder: 'Short description' },
                 { key: 'duration_months', label: 'Duration (months)', type: 'number', placeholder: '6' },
                 { key: 'fee', label: 'Fee (₹)', type: 'number', placeholder: '8000', required: true },
-                { key: 'commission_percent', label: 'Commission %', type: 'number', placeholder: '10', required: true },
+                { key: 'commission_percent', label: 'Default Commission %', type: 'number', placeholder: '10', required: true },
+                { key: 'commission_ic', label: 'Fixed IC Reward (Overrides %)', type: 'number', placeholder: '500' },
               ].map(f => (
                 <div key={f.key} style={{ marginBottom: '0.875rem' }}>
                   <label className="form-label">{f.label}</label>
