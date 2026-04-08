@@ -438,7 +438,7 @@ export default function AdminDashboard() {
                           <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>
                             {a.referrer_name ? (
                               <>
-                                <ICIcon size={14} /> {a.snapshot_commission_ic || (a.snapshot_fee * a.snapshot_commission_percent / 100)}
+                                <ICIcon size={14} /> {a.snapshot_commission_ic || (parseFloat(a.snapshot_fee * a.snapshot_commission_percent / 100 / (settings.ic_conversion_rate || 1)).toFixed(2))}
                               </>
                             ) : (
                               <span style={{ color: 'var(--text-secondary)', fontWeight: '400' }}>—</span>
@@ -741,7 +741,7 @@ export default function AdminDashboard() {
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
                         <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>₹{parseFloat(c.fee).toLocaleString()}</span>
                         <span style={{ color: '#00B4D8', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                          Reward: <ICIcon size={14} /> {c.commission_ic || (c.fee * c.commission_percent / 100)}
+                          Reward: <ICIcon size={14} /> {c.commission_ic || (parseFloat(c.fee * c.commission_percent / 100 / (settings.ic_conversion_rate || 1)).toFixed(2))}
                         </span>
                       </div>
                       <div style={{ display: 'flex', gap: '0.4rem', borderTop: '1px solid var(--border)', paddingTop: '0.75rem' }}>
