@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',  // Dynamic URL: Allows Vercel connecting to Render
+  baseURL: import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || '/api',  // Dynamic URL: Allows Vercel connecting to Render
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true, // Crucial for HTTP-Only Refresh cookies
