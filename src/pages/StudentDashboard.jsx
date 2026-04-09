@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import {
   Users, TrendingUp, DollarSign, Clock, LogOut, Monitor, LayoutDashboard,
-  BookOpen, Link2, Wallet, Settings, Menu, X, Copy, CheckCircle, IndianRupee, Plus, Layout, Trophy
+  BookOpen, Link2, Wallet, Settings, Menu, X, Copy, CheckCircle, IndianRupee, Plus, Layout, Trophy, Coins
 } from 'lucide-react';
 import Leaderboard from '../components/Leaderboard';
 import toast from 'react-hot-toast';
@@ -27,6 +27,7 @@ const Sidebar = ({ active, setActive, sidebarOpen, setSidebarOpen }) => {
     { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
     { id: 'admissions', label: 'My Admissions', icon: BookOpen },
     { id: 'earnings', label: 'Earnings', icon: Wallet },
+    { id: 'profile', label: 'My Profile', icon: Users },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
@@ -108,6 +109,8 @@ export default function StudentDashboard() {
     course_id: '', payment_mode: 'upi', payment_reference: '', payment_proof: null
   });
   const [settings, setSettings] = useState({ ic_conversion_rate: '1.0' });
+  const [profileForm, setProfileForm] = useState({ full_name: '', education: '', address: '', bio: '' });
+  const [profileLoading, setProfileLoading] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -159,6 +162,15 @@ export default function StudentDashboard() {
         setCourses(crs.data.data || []);
         setWithdrawals(withdrawalsRes.data.data || []);
         if (settingsRes) setSettings(settingsRes.data.data || { ic_conversion_rate: '1.0' });
+        
+        // Load profile data into form
+        const currentProfile = dash.data.data?.user || {};
+        setProfileForm({
+          full_name: currentProfile.full_name || '',
+          education: '', // Mocked for now
+          address: '',
+          bio: ''
+        });
       } catch (err) {
         console.error('Dashboard load error', err);
         setError('Failed to load dashboard data. Please try again.');
@@ -180,6 +192,18 @@ export default function StudentDashboard() {
     navigator.clipboard.writeText(`${window.location.origin}/register?ref=${user?.referralCode}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCheckIn = async () => {
+    try {
+      const res = await api.post('/users/check-in');
+      toast.success(res.data.message);
+      // Reload earnings to show update
+      const earnRes = await api.get('/commissions/summary');
+      setEarnings(earnRes.data.data);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Check-in failed');
+    }
   };
 
 
@@ -256,7 +280,11 @@ export default function StudentDashboard() {
               <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }} className="hidden sm:block">Welcome back, {user?.fullName?.split(' ')[0] || 'User'}</div>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <button onClick={handleCheckIn} className="btn-primary" 
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.45rem 0.875rem', fontSize: '0.75rem', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', borderRadius: '10px', boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.2)' }}>
+              ✨ Daily Check-in
+            </button>
             {user?.role === 'co-admin' && (
               <button onClick={() => window.location.href = '/dashboard/admin'} className="btn-outline hidden md:flex" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.75rem', fontSize: '0.75rem' }}>
                 <Layout size={14} color="#ef4444" />
@@ -606,6 +634,13 @@ export default function StudentDashboard() {
                               <ICIcon size={24} /> {parseFloat((earnings?.summary?.paid_earnings || 0) / (settings.ic_conversion_rate || 1)).toLocaleString()}
                             </div>
                           ), color: '#ef4444' },
+                          { label: 'Commission Tier', value: (
+                            <div style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-primary)' }}>
+                              {(stats?.total_admissions || 0) >= 15 ? 'Platinum (3.35%)' : 
+                               (stats?.total_admissions || 0) >= 10 ? 'Gold (3.20%)' :
+                               (stats?.total_admissions || 0) >= 5 ? 'Silver (3.10%)' : 'Standard (3.0%)'}
+                            </div>
+                          ), color: '#8b5cf6' },
                         ].map(s => (
                           <div key={s.label}>
                             <div style={{ fontSize: '1.5rem', fontWeight: '800', color: s.color, fontFamily: 'Outfit' }}>{s.value}</div>
@@ -711,6 +746,69 @@ export default function StudentDashboard() {
                     <button onClick={logout} style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px', padding: '0.625rem 1.25rem', color: '#dc2626', fontWeight: '600', fontSize: '0.875rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
                       <LogOut size={16} /> Sign Out
                     </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Profile */}
+              {active === 'profile' && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  <div style={{ background: 'var(--bg-card)', borderRadius: '16px', padding: '2rem', border: '1px solid var(--border)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+                      <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                        <Users size={32} />
+                      </div>
+                      <div>
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: '800', fontFamily: 'Outfit', color: 'var(--text-primary)' }}>Personal Profile</h2>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Complete your profile to earn one-time reward of 100 IC.</p>
+                      </div>
+                    </div>
+
+                    <form onSubmit={async (e) => {
+                      e.preventDefault();
+                      setProfileLoading(true);
+                      try {
+                        const res = await api.patch('/users/profile', profileForm);
+                        toast.success(res.data.message);
+                        if (res.data.bonus_granted) toast.success('🎁 +100 IC Profile Bonus Credited!');
+                        
+                        // Reload dashboard to update stats
+                        const dashRes = await api.get('/dashboard/student');
+                        setData(dashRes.data.data);
+                      } catch (err) {
+                        toast.error(err.response?.data?.message || 'Update failed');
+                      } finally {
+                        setProfileLoading(false);
+                      }
+                    }} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+                        <div>
+                          <label className="form-label">Full Name</label>
+                          <input type="text" className="form-input" required value={profileForm.full_name} onChange={e => setProfileForm({ ...profileForm, full_name: e.target.value })} />
+                        </div>
+                        <div>
+                          <label className="form-label">Qualification / Education</label>
+                          <input type="text" className="form-input" placeholder="e.g. BCA Student" value={profileForm.education} onChange={e => setProfileForm({ ...profileForm, education: e.target.value })} />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="form-label">Full Address</label>
+                        <textarea className="form-input" rows={3} placeholder="Complete postal address" value={profileForm.address} onChange={e => setProfileForm({ ...profileForm, address: e.target.value })} style={{ resize: 'none' }}></textarea>
+                      </div>
+
+                      <div>
+                        <label className="form-label">Personal Bio / Experience</label>
+                        <textarea className="form-input" rows={3} placeholder="Tell us about yourself..." value={profileForm.bio} onChange={e => setProfileForm({ ...profileForm, bio: e.target.value })} style={{ resize: 'none' }}></textarea>
+                      </div>
+
+                      <div style={{ paddingTop: '1rem', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
+                        <button type="submit" disabled={profileLoading} className="btn-primary" style={{ padding: '0.75rem 2rem', height: 'auto' }}>
+                          {profileLoading ? 'Saving...' : 'Update & Claim Bonus'}
+                        </button>
+                      </div>
+                    </form>
                   </div>
                 </motion.div>
               )}
