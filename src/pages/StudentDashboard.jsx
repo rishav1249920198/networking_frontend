@@ -144,7 +144,7 @@ export default function StudentDashboard() {
       setLoading(true);
       setError(null);
       try {
-        const [dash, statsRes, earn, refs, tree, adms, crs, withdrawalsRes, settingsRes, bonusesRes] = await Promise.all([
+        const [dash, statsRes, earn, refs, tree, adms, crs, withdrawalsRes, settingsRes, bonusesRes, profileRes] = await Promise.all([
           api.get('/dashboard/student'),
           api.get('/dashboard/stats'),
           api.get('/commissions/summary'),
@@ -154,7 +154,8 @@ export default function StudentDashboard() {
           api.get('/courses'), // public list
           api.get('/commissions/withdrawals?limit=50'),
           api.get('/settings'),
-          api.get('/users/bonuses')
+          api.get('/users/bonuses'),
+          api.get('/users/profile')
         ]);
         setData(dash.data.data);
         setStats(statsRes.data.data);
@@ -168,12 +169,12 @@ export default function StudentDashboard() {
         if (settingsRes) setSettings(settingsRes.data.data || { ic_conversion_rate: '1.0' });
         
         // Load profile data into form
-        const currentProfile = dash.data.data?.user || {};
+        const currentProfile = profileRes.data.data || {};
         setProfileForm({
           full_name: currentProfile.full_name || '',
-          education: '', // Mocked for now
-          address: '',
-          bio: ''
+          education: currentProfile.education || '',
+          address: currentProfile.address || '',
+          bio: currentProfile.bio || ''
         });
       } catch (err) {
         console.error('Dashboard load error', err);
@@ -595,7 +596,7 @@ export default function StudentDashboard() {
                   <div className="table-responsive">
                     <table className="data-table">
                       <thead>
-                        <tr><th>Course</th><th>Fee</th><th>Reward</th><th>Status</th><th>Mode</th><th>Date</th></tr>
+                        <tr><th>Course</th><th>Fee</th>{user?.role !== 'student' && <th>Reward</th>}<th>Status</th><th>Mode</th><th>Date</th></tr>
                       </thead>
                       <tbody>
                         {admissions.length === 0 ? (
@@ -604,9 +605,11 @@ export default function StudentDashboard() {
                           <tr key={a.id}>
                             <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{a.course_name}</td>
                             <td>₹{parseFloat(a.snapshot_fee).toLocaleString()}</td>
-                            <td style={{ fontWeight: '700' }}>
-                              <ICIcon size={14} /> {a.snapshot_commission_ic || (parseFloat(a.snapshot_fee * a.snapshot_commission_percent / 100 / (settings.ic_conversion_rate || 1)).toFixed(2))}
-                            </td>
+                            {user?.role !== 'student' && (
+                              <td style={{ fontWeight: '700' }}>
+                                <ICIcon size={14} /> {a.snapshot_commission_ic || (parseFloat(a.snapshot_fee * a.snapshot_commission_percent / 100 / (settings.ic_conversion_rate || 1)).toFixed(2))}
+                              </td>
+                            )}
                             <td>{getStatusBadge(a.status)}</td>
                             <td><span className="badge badge-info">{a.admission_mode || 'offline'}</span></td>
                             <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{new Date(a.created_at).toLocaleDateString()}</td>
