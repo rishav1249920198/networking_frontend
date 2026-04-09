@@ -301,7 +301,7 @@ export default function StudentDashboard() {
                       { label: 'Admissions', value: stats?.total_admissions || 0, icon: CheckCircle, color: '#10b981', sub: `Approved Students` },
                       { label: 'Total Reward Points', value: (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}>
-                          <ICIcon size={24} /> {parseFloat(stats?.total_commission || 0).toLocaleString()}
+                          <ICIcon size={24} /> {parseFloat((stats?.total_commission || 0) / (settings.ic_conversion_rate || 1)).toLocaleString()}
                         </div>
                       ), icon: Coins, color: '#F4A261', sub: `Earnings (IC)`, gold: true },
                     ].map((s, i) => {
@@ -559,7 +559,7 @@ export default function StudentDashboard() {
                   <div className="table-responsive">
                     <table className="data-table">
                       <thead>
-                        <tr><th>Course</th><th>Fee</th><th>Status</th><th>Mode</th><th>Date</th></tr>
+                        <tr><th>Course</th><th>Fee</th><th>Reward</th><th>Status</th><th>Mode</th><th>Date</th></tr>
                       </thead>
                       <tbody>
                         {admissions.length === 0 ? (
@@ -568,6 +568,9 @@ export default function StudentDashboard() {
                           <tr key={a.id}>
                             <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{a.course_name}</td>
                             <td>₹{parseFloat(a.snapshot_fee).toLocaleString()}</td>
+                            <td style={{ fontWeight: '700' }}>
+                              <ICIcon size={14} /> {a.snapshot_commission_ic || (parseFloat(a.snapshot_fee * a.snapshot_commission_percent / 100 / (settings.ic_conversion_rate || 1)).toFixed(2))}
+                            </td>
                             <td>{getStatusBadge(a.status)}</td>
                             <td><span className="badge badge-info">{a.admission_mode || 'offline'}</span></td>
                             <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{new Date(a.created_at).toLocaleDateString()}</td>
@@ -589,18 +592,18 @@ export default function StudentDashboard() {
                         {[
                           { label: 'Total IC', value: (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                              <ICIcon size={24} /> {parseFloat(earnings?.summary?.total_earnings || 0).toLocaleString()}
+                              <ICIcon size={24} /> {parseFloat((earnings?.summary?.total_earnings || 0) / (settings.ic_conversion_rate || 1)).toLocaleString()}
                             </div>
                           ), color: '#3b82f6' },
                           { label: 'Balance (IC)', value: (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                              <ICIcon size={24} /> {parseFloat(earnings?.summary?.pending_earnings || 0).toLocaleString()}
+                              <ICIcon size={24} /> {parseFloat((earnings?.summary?.pending_earnings || 0) / (settings.ic_conversion_rate || 1)).toLocaleString()}
                             </div>
                           ), color: '#00B4D8' },
                           { label: 'Converted INR', value: `₹${parseFloat((earnings?.summary?.pending_earnings || 0) * settings.ic_conversion_rate).toLocaleString()}`, color: '#10b981' },
                           { label: 'Withdrawn', value: (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                              <ICIcon size={24} /> {parseFloat(earnings?.summary?.paid_earnings || 0).toLocaleString()}
+                              <ICIcon size={24} /> {parseFloat((earnings?.summary?.paid_earnings || 0) / (settings.ic_conversion_rate || 1)).toLocaleString()}
                             </div>
                           ), color: '#ef4444' },
                         ].map(s => (

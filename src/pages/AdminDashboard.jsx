@@ -357,7 +357,7 @@ export default function AdminDashboard() {
                     { label: 'Approved', value: stats.approved || 0, icon: CheckCircle, color: '#10b981' },
                     { label: 'Total Earnings', value: (
                       <span>
-                        <ICIcon size={22} /> {parseFloat(commStats.total_commissions || 0).toLocaleString()}
+                        <ICIcon size={22} /> {parseFloat((commStats.total_commissions || 0) / (settings.ic_conversion_rate || 1)).toLocaleString()}
                       </span>
                     ), icon: Coins, color: 'var(--accent)' },
                     { label: 'Total Students', value: studentStats.total_students || 0, icon: Users, color: '#8b5cf6' },
@@ -741,7 +741,7 @@ export default function AdminDashboard() {
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
                         <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>₹{parseFloat(c.fee).toLocaleString()}</span>
                         <span style={{ color: '#00B4D8', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                          Reward: <ICIcon size={14} /> {c.commission_ic || (parseFloat(c.fee * c.commission_percent / 100 / (settings.ic_conversion_rate || 1)).toFixed(2))}
+                          Reward: <ICIcon size={14} /> {parseFloat((c.commission_ic || (c.fee * c.commission_percent / 100)) / (settings.ic_conversion_rate || 1)).toFixed(2)}
                         </span>
                       </div>
                       <div style={{ display: 'flex', gap: '0.4rem', borderTop: '1px solid var(--border)', paddingTop: '0.75rem' }}>
@@ -820,9 +820,13 @@ export default function AdminDashboard() {
                 {/* Summary Cards */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
                   {[
-                    { label: 'Approval Rate', value: `${stats.total > 0 ? Math.round((stats.approved / stats.total) * 100) : 0}%`, color: '#10b981' },
-                    { label: 'Total Commissions', value: `₹${parseFloat(commStats.total_commissions || 0).toLocaleString()}`, color: 'var(--text-primary)' },
-                    { label: 'Pending Commissions', value: commStats.pending_count || 0, color: '#f59e0b' },
+                    { label: 'Total Admissions', value: stats.total || 0, color: '#10b981' },
+                    { label: 'Total Commissions', value: (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <ICIcon size={20} /> {parseFloat((commStats.total_commissions || 0) / (settings.ic_conversion_rate || 1)).toLocaleString()}
+                      </div>
+                    ), color: 'var(--text-primary)' },
+                    { label: 'Pending Credits', value: commStats.pending_count || 0, color: '#f59e0b' },
                     { label: 'Active Courses', value: courses.filter(c => c.is_active).length, color: '#00B4D8' },
                   ].map((s, i) => (
                     <div key={i} style={{ background: 'var(--bg-card)', borderRadius: '14px', padding: '1.25rem', border: '1px solid var(--border)' }}>

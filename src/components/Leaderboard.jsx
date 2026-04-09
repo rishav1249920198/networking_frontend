@@ -7,21 +7,29 @@ import ICIcon from './ICIcon';
 const Leaderboard = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState({ ic_conversion_rate: '1.0' });
 
   useEffect(() => {
-    const fetchLeaderboard = async () => {
+    const fetchData = async () => {
       try {
-        const res = await api.get('/referrals/leaderboard');
-        if (res.data.success) {
-          setData(res.data.data);
+        const [leaderboardRes, settingsRes] = await Promise.all([
+          api.get('/referrals/leaderboard'),
+          api.get('/settings')
+        ]);
+        
+        if (leaderboardRes.data.success) {
+          setData(leaderboardRes.data.data);
+        }
+        if (settingsRes.data.success) {
+          setSettings(settingsRes.data.data);
         }
       } catch (err) {
-        console.error('Failed to fetch leaderboard:', err);
+        console.error('Failed to fetch leaderboard data:', err);
       } finally {
         setLoading(false);
       }
     };
-    fetchLeaderboard();
+    fetchData();
   }, []);
 
   const getRankStyle = (rank) => {
@@ -98,7 +106,7 @@ const Leaderboard = () => {
 
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  <ICIcon size={14} /> {item.total_earned.toLocaleString()}
+                  <ICIcon size={14} /> {parseFloat(item.total_earned / (settings.ic_conversion_rate || 1)).toLocaleString()}
                 </div>
                 <div style={{ fontSize: '0.65rem', color: '#10b981', fontWeight: '700', textTransform: 'uppercase' }}>
                   Reward Points
