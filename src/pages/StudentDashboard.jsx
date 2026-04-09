@@ -6,7 +6,8 @@ import {
 } from 'recharts';
 import {
   Users, TrendingUp, DollarSign, Clock, LogOut, Monitor, LayoutDashboard,
-  BookOpen, Link2, Wallet, Settings, Menu, X, Copy, CheckCircle, IndianRupee, Plus, Layout, Trophy, Coins
+  BookOpen, Link2, Wallet, Settings, Menu, X, Copy, CheckCircle, IndianRupee, Plus, Layout, Trophy, Coins,
+  AlertCircle, RefreshCw
 } from 'lucide-react';
 import Leaderboard from '../components/Leaderboard';
 import toast from 'react-hot-toast';
@@ -625,18 +626,23 @@ export default function StudentDashboard() {
                     <div style={{ background: 'var(--bg)', borderRadius: '12px', padding: '1.25rem', marginBottom: '1.25rem' }}>
                       <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
                         {[
-                          { label: 'Total IC', value: (
+                          { label: 'Total Earned (IC)', value: (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                               <ICIcon size={24} /> {parseFloat((earnings?.summary?.total_earnings || 0) / (settings.ic_conversion_rate || 1)).toLocaleString()}
                             </div>
                           ), color: '#3b82f6' },
-                          { label: 'Balance (IC)', value: (
+                          { label: 'Current Balance (IC)', value: (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                               <ICIcon size={24} /> {parseFloat((earnings?.summary?.pending_earnings || 0) / (settings.ic_conversion_rate || 1)).toLocaleString()}
                             </div>
                           ), color: '#00B4D8' },
-                          { label: 'Converted INR', value: `₹${parseFloat((earnings?.summary?.pending_earnings || 0) * settings.ic_conversion_rate).toLocaleString()}`, color: '#10b981' },
-                          { label: 'Withdrawn', value: (
+                          { label: 'Current Balance (₹)', value: `₹${parseFloat(earnings?.summary?.pending_earnings || 0).toLocaleString()}`, color: '#10b981' },
+                          { label: 'Processing (IC)', value: (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                              <ICIcon size={24} /> {parseFloat((earnings?.summary?.processing_earnings || 0) / (settings.ic_conversion_rate || 1)).toLocaleString()}
+                            </div>
+                          ), color: '#f59e0b' },
+                          { label: 'Paid Out (IC)', value: (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                               <ICIcon size={24} /> {parseFloat((earnings?.summary?.paid_earnings || 0) / (settings.ic_conversion_rate || 1)).toLocaleString()}
                             </div>
