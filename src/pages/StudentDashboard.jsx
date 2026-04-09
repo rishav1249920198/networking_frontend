@@ -101,6 +101,7 @@ export default function StudentDashboard() {
   const [withdrawForm, setWithdrawForm] = useState({ amount: '', upi_id: '' });
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [withdrawals, setWithdrawals] = useState([]);
+  const [bonuses, setBonuses] = useState([]);
 
   // Admission Modal State
   const [showAdmissionModal, setShowAdmissionModal] = useState(false);
@@ -142,7 +143,7 @@ export default function StudentDashboard() {
       setLoading(true);
       setError(null);
       try {
-        const [dash, statsRes, earn, refs, tree, adms, crs, withdrawalsRes, settingsRes] = await Promise.all([
+        const [dash, statsRes, earn, refs, tree, adms, crs, withdrawalsRes, settingsRes, bonusesRes] = await Promise.all([
           api.get('/dashboard/student'),
           api.get('/dashboard/stats'),
           api.get('/commissions/summary'),
@@ -151,7 +152,8 @@ export default function StudentDashboard() {
           api.get('/admissions?limit=50'),
           api.get('/courses'), // public list
           api.get('/commissions/withdrawals?limit=50'),
-          api.get('/settings')
+          api.get('/settings'),
+          api.get('/users/bonuses')
         ]);
         setData(dash.data.data);
         setStats(statsRes.data.data);
@@ -161,6 +163,7 @@ export default function StudentDashboard() {
         setAdmissions(adms.data.data || []);
         setCourses(crs.data.data || []);
         setWithdrawals(withdrawalsRes.data.data || []);
+        setBonuses(bonusesRes.data.data || []);
         if (settingsRes) setSettings(settingsRes.data.data || { ic_conversion_rate: '1.0' });
         
         // Load profile data into form
@@ -198,9 +201,13 @@ export default function StudentDashboard() {
     try {
       const res = await api.post('/users/check-in');
       toast.success(res.data.message);
-      // Reload earnings to show update
-      const earnRes = await api.get('/commissions/summary');
+      // Reload earnings & bonuses to show update
+      const [earnRes, bonRes] = await Promise.all([
+        api.get('/commissions/summary'),
+        api.get('/users/bonuses')
+      ]);
       setEarnings(earnRes.data.data);
+      setBonuses(bonRes.data.data || []);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Check-in failed');
     }
@@ -636,9 +643,9 @@ export default function StudentDashboard() {
                           ), color: '#ef4444' },
                           { label: 'Commission Tier', value: (
                             <div style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-primary)' }}>
-                              {(stats?.total_admissions || 0) >= 15 ? 'Platinum (3.35%)' : 
-                               (stats?.total_admissions || 0) >= 10 ? 'Gold (3.20%)' :
-                               (stats?.total_admissions || 0) >= 5 ? 'Silver (3.10%)' : 'Standard (3.0%)'}
+                              {(stats?.total_admissions || 0) >= 15 ? 'Platinum (+0.35%)' : 
+                               (stats?.total_admissions || 0) >= 10 ? 'Gold (+0.20%)' :
+                               (stats?.total_admissions || 0) >= 5 ? 'Silver (+0.10%)' : 'Standard (+0.0%)'}
                             </div>
                           ), color: '#8b5cf6' },
                         ].map(s => (
@@ -653,7 +660,35 @@ export default function StudentDashboard() {
                       <Wallet size={16} /> Request Withdrawal
                     </button>
                     
-                    <div style={{ marginTop: '2rem' }}>
+                    <div style={{ marginTop: '2.5rem' }}>
+                      <h4 style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.9rem', marginBottom: '1rem' }}>Reward & milestone History</h4>
+                      <div className="table-responsive">
+                        <table className="data-table">
+                          <thead>
+                            <tr><th>Reward Type</th><th>Amount</th><th>Date</th></tr>
+                          </thead>
+                          <tbody>
+                            {bonuses.length === 0 ? (
+                              <tr><td colSpan={3} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No milestone rewards yet.</td></tr>
+                            ) : bonuses.map(b => (
+                              <tr key={b.id}>
+                                <td style={{ fontWeight: '600', color: 'var(--text-primary)', textTransform: 'capitalize' }}>
+                                  {b.bonus_type.replace(/_/g, ' ')}
+                                </td>
+                                <td style={{ fontWeight: '700', color: '#10b981' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                    <ICIcon size={14} /> {parseFloat(b.amount / (settings.ic_conversion_rate || 1)).toLocaleString()}
+                                  </div>
+                                </td>
+                                <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{new Date(b.created_at).toLocaleDateString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <div style={{ marginTop: '2.5rem' }}>
                       <h4 style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.9rem', marginBottom: '1rem' }}>Withdrawal History</h4>
                       <div className="table-responsive">
                         <table className="data-table">
