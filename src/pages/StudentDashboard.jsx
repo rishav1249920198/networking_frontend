@@ -632,7 +632,7 @@ export default function StudentDashboard() {
                               <tr key={w.id}>
                                 <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                                    <ICIcon size={14} /> {parseFloat(w.amount).toLocaleString()}
+                                    <ICIcon size={14} /> {parseFloat(w.amount / (settings.ic_conversion_rate || 1)).toLocaleString()}
                                   </div>
                                   <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 'normal' }}>₹{parseFloat(w.inr_amount).toLocaleString()}</div>
                                 </td>
@@ -750,7 +750,7 @@ export default function StudentDashboard() {
                   <div style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }}>
                     <ICIcon size={18} />
                   </div>
-                  <input type="number" className="form-input" style={{ paddingLeft: '3rem' }} placeholder="Enter points" min={1} max={parseFloat(earn?.pending_earnings || 0)} required
+                  <input type="number" className="form-input" style={{ paddingLeft: '3rem' }} placeholder="Enter points" min={1} max={parseFloat((earn?.pending_earnings || 0) / (settings.ic_conversion_rate || 1))} required
                     value={withdrawForm.amount} onChange={e => setWithdrawForm({ ...withdrawForm, amount: e.target.value })} />
                 </div>
                 {withdrawForm.amount && (

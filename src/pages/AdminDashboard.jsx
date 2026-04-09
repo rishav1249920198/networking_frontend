@@ -642,7 +642,7 @@ export default function AdminDashboard() {
                               <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{w.student_system_id} | {w.mobile}</div>
                             </td>
                              <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>
-                               <ICIcon size={16} /> {parseFloat(w.amount).toLocaleString()}
+                               <ICIcon size={16} /> {parseFloat(w.amount / (settings.ic_conversion_rate || 1)).toLocaleString()}
                                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', fontWeight: 'normal' }}>₹{parseFloat(w.inr_amount).toLocaleString()}</div>
                              </td>
                             <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
