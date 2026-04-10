@@ -17,6 +17,7 @@ import api from '../api/client';
 import NotificationBell from '../components/NotificationBell';
 import ThemeToggle from '../components/ThemeToggle';
 import ICIcon from '../components/ICIcon';
+import LoginCalendar from '../components/LoginCalendar';
 
 
 const Sidebar = ({ active, setActive, sidebarOpen, setSidebarOpen }) => {
@@ -102,6 +103,7 @@ export default function StudentDashboard() {
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [withdrawals, setWithdrawals] = useState([]);
   const [bonuses, setBonuses] = useState([]);
+  const [showCalendar, setShowCalendar] = useState(false);
 
   const [settings, setSettings] = useState({ ic_conversion_rate: '1.0' });
   const [profileForm, setProfileForm] = useState({ full_name: '', education: '', address: '', bio: '' });
@@ -199,26 +201,6 @@ export default function StudentDashboard() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleCheckIn = async () => {
-    try {
-      const res = await api.post('/users/check-in');
-      toast.success(res.data.message);
-      
-      // Optimistic Stats Patch (Instant +10 IC)
-      setStats(prev => ({
-        ...prev,
-        total_commission: (prev.total_commission || 0) + (0.10 * (settings.ic_conversion_rate || 1))
-      }));
-
-      // Reload everything in background to be 100% sure
-      await loadData(false);
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Check-in failed');
-    }
-  };
-
-
-
   // Convert referral tree to react-d3-tree format
   const toTreeData = (node) => ({
     name: node.full_name || node.root?.full_name || 'You',
@@ -258,16 +240,23 @@ export default function StudentDashboard() {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-            <button onClick={handleCheckIn} className="btn-primary" 
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.45rem 0.875rem', fontSize: '0.75rem', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', borderRadius: '10px', boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.2)' }}>
-              ✨ Daily Check-in
+            <button 
+              onClick={() => setShowCalendar(true)} 
+              className="btn-primary" 
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.5rem', 
+                padding: '0.45rem 0.875rem', 
+                fontSize: '0.75rem', 
+                background: 'linear-gradient(135deg, #10b981, #059669)', 
+                border: 'none', 
+                borderRadius: '10px', 
+                boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.2)' 
+              }}
+            >
+              📅 Daily Rewards
             </button>
-            {user?.role === 'co-admin' && (
-              <button onClick={() => window.location.href = '/dashboard/admin'} className="btn-outline hidden md:flex" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.75rem', fontSize: '0.75rem' }}>
-                <Layout size={14} color="#ef4444" />
-                Admin
-              </button>
-            )}
             <ThemeToggle />
             <NotificationBell scope="student" />
             <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.4rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }} className="hidden sm:flex">
@@ -863,6 +852,11 @@ export default function StudentDashboard() {
           </motion.div>
         </div>
       )}
+      <LoginCalendar 
+        isOpen={showCalendar} 
+        onClose={() => setShowCalendar(false)} 
+        onCheckInSuccess={() => loadData(false)}
+      />
     </div>
   );
 }
