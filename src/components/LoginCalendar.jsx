@@ -59,6 +59,13 @@ export default function LoginCalendar({ isOpen, onClose, onCheckInSuccess }) {
 
   const days = [];
   // Add empty slots for first day padding
+  for (let i = 0; i < firstDay; i++) {
+    days.push(null);
+  }
+  // Add actual days
+  for (let i = 1; i <= daysInMonth; i++) {
+    const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), i);
+    const dateStr = date.toISOString().split('T')[0];
     days.push({
       day: i,
       dateStr,
