@@ -817,13 +817,7 @@ export default function StudentDashboard() {
                       </div>
                     </div>
 
-                    {/* Temporary Debug Row for Troubleshooting */}
-                    <div style={{ background: 'var(--bg)', border: '1px dashed var(--primary)', borderRadius: '10px', padding: '1rem', marginBottom: '1.5rem', display: 'flex', gap: '2rem', fontSize: '0.8rem' }}>
-                      <div><strong>Debug Info:</strong></div>
-                      <div>User ID: <span style={{ fontFamily: 'monospace' }}>{user?.id}</span></div>
-                      <div>Profile Completed: <span style={{ fontWeight: '800', color: user?.profileCompleted ? '#10b981' : '#ef4444' }}>{user?.profileCompleted ? 'TRUE' : 'FALSE'}</span></div>
-                      <div>Total Comm (INR): <span style={{ fontWeight: '800', color: 'var(--primary)' }}>{stats?.total_commission}</span></div>
-                    </div>
+
 
                     <form onSubmit={async (e) => {
                       e.preventDefault();
