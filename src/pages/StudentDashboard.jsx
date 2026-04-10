@@ -26,7 +26,6 @@ const Sidebar = ({ active, setActive, sidebarOpen, setSidebarOpen }) => {
     { id: 'referrals', label: 'My Referrals', icon: Users },
     { id: 'tree', label: 'Referral Tree', icon: Link2 },
     { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
-    { id: 'admissions', label: 'My Admissions', icon: BookOpen },
     { id: 'earnings', label: 'Earnings', icon: Wallet },
     { id: 'profile', label: 'My Profile', icon: Users },
     { id: 'settings', label: 'Settings', icon: Settings },
@@ -104,12 +103,6 @@ export default function StudentDashboard() {
   const [withdrawals, setWithdrawals] = useState([]);
   const [bonuses, setBonuses] = useState([]);
 
-  // Admission Modal State
-  const [showAdmissionModal, setShowAdmissionModal] = useState(false);
-  const [courses, setCourses] = useState([]);
-  const [admissionForm, setAdmissionForm] = useState({
-    course_id: '', payment_mode: 'upi', payment_reference: '', payment_proof: null
-  });
   const [settings, setSettings] = useState({ ic_conversion_rate: '1.0' });
   const [profileForm, setProfileForm] = useState({ full_name: '', education: '', address: '', bio: '' });
   const [profileLoading, setProfileLoading] = useState(false);
@@ -241,44 +234,11 @@ export default function StudentDashboard() {
   const stat = data?.referrals || {};
   const earn = data?.earnings || {};
 
-  const conversionRate = stats?.total_referrals > 0 ? Math.round(((stats.total_admissions || 0) / stats.total_referrals) * 100) : 0;
+  const conversionRate = stats?.total_referrals > 0 ? Math.round(((stats.total_leads || 0) / stats.total_referrals) * 100) : 0;
   const funnelData = [
-    { name: 'Approved', count: stats?.total_admissions || 0, fill: '#10b981' },
     { name: 'Pending', count: stats?.total_leads || 0, fill: '#f59e0b' },
     { name: 'Total Referrals', count: stats?.total_referrals || 0, fill: '#00B4D8' }
   ];
-
-  const handleAdmissionSubmit = async (e) => {
-    e.preventDefault();
-    if (!admissionForm.course_id || !admissionForm.payment_reference) {
-      return toast.error("Please fill required fields (Course & Txn Reference)");
-    }
-    
-    // Construct FormData
-    const formData = new FormData();
-    formData.append('course_id', admissionForm.course_id);
-    formData.append('payment_mode', admissionForm.payment_mode);
-    formData.append('payment_reference', admissionForm.payment_reference);
-    formData.append('student_name', user?.fullName || '');
-    formData.append('student_mobile', user?.mobile || '');
-    formData.append('student_email', user?.email || '');
-    if (user?.referralCode) formData.append('referral_code', user?.referralCode);
-    if (admissionForm.payment_proof) formData.append('payment_receipt', admissionForm.payment_proof);
-
-    try {
-      const res = await api.post('/admissions/online', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      toast.success(res.data.message || 'Admission submitted!');
-      setShowAdmissionModal(false);
-      setAdmissionForm({ course_id: '', payment_mode: 'upi', payment_reference: '', payment_proof: null });
-      
-      // Full refresh to update "Pending Leads" stat card instantly
-      await loadData(false);
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to submit admission');
-    }
-  };
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', width: '100%', maxWidth: '100vw' }}>
@@ -344,7 +304,6 @@ export default function StudentDashboard() {
                     {[
                       { label: 'Total Referrals', value: stats?.total_referrals || 0, icon: Users, color: 'var(--primary)', sub: 'Registered students' },
                       { label: 'Leads (Pending)', value: stats?.total_leads || 0, icon: Clock, color: 'var(--warning)', sub: `Pending Approval` },
-                      { label: 'Admissions', value: stats?.total_admissions || 0, icon: CheckCircle, color: '#10b981', sub: `Approved Students` },
                       { label: 'Total Reward Points', value: (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}>
                           <ICIcon size={24} /> {parseFloat((stats?.total_commission || 0) / (settings.ic_conversion_rate || 1)).toLocaleString()}
@@ -592,43 +551,7 @@ export default function StudentDashboard() {
                 </motion.div>
               )}
 
-              {/* Admissions */}
-              {active === 'admissions' && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                  style={{ background: 'var(--bg-card)', borderRadius: '16px', padding: '1.5rem', border: '1px solid var(--border)', minWidth: 0, overflow: 'hidden' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                    <h3 style={{ fontWeight: '700', color: 'var(--text-primary)' }}>My Admissions</h3>
-                    <button onClick={() => setShowAdmissionModal(true)} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
-                      <Plus size={16} /> Apply for Course
-                    </button>
-                  </div>
-                  <div className="table-responsive">
-                    <table className="data-table">
-                      <thead>
-                        <tr><th>Course</th><th>Fee</th>{user?.role !== 'student' && <th>Reward</th>}<th>Status</th><th>Mode</th><th>Date</th></tr>
-                      </thead>
-                      <tbody>
-                        {admissions.length === 0 ? (
-                          <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No admissions found.</td></tr>
-                        ) : admissions.map(a => (
-                          <tr key={a.id}>
-                            <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{a.course_name}</td>
-                            <td>₹{parseFloat(a.snapshot_fee).toLocaleString()}</td>
-                            {user?.role !== 'student' && (
-                              <td style={{ fontWeight: '700' }}>
-                                <ICIcon size={14} /> {a.snapshot_commission_ic || (parseFloat(a.snapshot_fee * a.snapshot_commission_percent / 100 / (settings.ic_conversion_rate || 1)).toFixed(2))}
-                              </td>
-                            )}
-                            <td>{getStatusBadge(a.status)}</td>
-                            <td><span className="badge badge-info">{a.admission_mode || 'offline'}</span></td>
-                            <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{new Date(a.created_at).toLocaleDateString()}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </motion.div>
-              )}
+
 
               {/* Earnings */}
               {active === 'earnings' && (
@@ -939,58 +862,6 @@ export default function StudentDashboard() {
               </div>
             </form>
           </motion.div>
-        </div>
-      )}
-      {/* OVERLAYS/MODALS MUST BE OUTSIDE MAIN CONTENT */}
-      {showAdmissionModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,36,99,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1rem' }}>
-          <div style={{ background: 'var(--bg-card)', borderRadius: '20px', width: 'min(95%, 500px)', overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
-            <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg)' }}>
-              <h3 style={{ fontWeight: '800', color: 'var(--text-primary)', fontSize: '1.2rem', fontFamily: 'Outfit' }}>Online Admission</h3>
-              <button onClick={() => setShowAdmissionModal(false)} style={{ background: 'var(--bg-card)', border: '1px solid #e2e8f0', width: '30px', height: '30px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                <X size={16} />
-              </button>
-            </div>
-            <form onSubmit={handleAdmissionSubmit} style={{ padding: '1.5rem' }}>
-              
-              <div style={{ marginBottom: '1.25rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-primary)' }}>Select Course <span style={{ color: 'red' }}>*</span></label>
-                <select className="form-input" required value={admissionForm.course_id} onChange={e => setAdmissionForm({ ...admissionForm, course_id: e.target.value })}>
-                  <option value="">-- Choose a Course --</option>
-                  {courses.filter(c => c.is_active).map(c => (
-                    <option key={c.id} value={c.id}>{c.name} (Fee: ₹{c.fee})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-primary)' }}>Payment Mode</label>
-                  <select className="form-input" value={admissionForm.payment_mode} onChange={e => setAdmissionForm({ ...admissionForm, payment_mode: e.target.value })}>
-                    <option value="upi">UPI</option>
-                    <option value="netbanking">Net Banking</option>
-                    <option value="card">Card</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-primary)' }}>Txn Reference ID <span style={{ color: 'red' }}>*</span></label>
-                  <input type="text" className="form-input" required placeholder="UTR / Ref No." value={admissionForm.payment_reference} onChange={e => setAdmissionForm({ ...admissionForm, payment_reference: e.target.value })} />
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-primary)' }}>Payment Receipt Image (Optional)</label>
-                <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '10px', padding: '1rem', textAlign: 'center' }}>
-                  <input type="file" accept="image/*" onChange={e => setAdmissionForm({ ...admissionForm, payment_proof: e.target.files[0] })} style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }} />
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <button type="button" onClick={() => setShowAdmissionModal(false)} className="btn-outline" style={{ flex: 1, padding: '0.75rem' }}>Cancel</button>
-                <button type="submit" className="btn-primary" style={{ flex: 2, padding: '0.75rem' }}>Submit Admission</button>
-              </div>
-            </form>
-          </div>
         </div>
       )}
     </div>
