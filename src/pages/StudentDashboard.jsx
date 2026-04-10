@@ -259,12 +259,15 @@ export default function StudentDashboard() {
             </button>
             <ThemeToggle />
             <NotificationBell scope="student" />
-            <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.4rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }} className="hidden sm:flex">
+            <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.4rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }} className="hidden lg:flex">
               <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-primary)' }}>{user?.referralCode}</span>
               <button onClick={copyReferralCode} style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? '#10b981' : 'var(--accent)', display: 'flex', alignItems: 'center' }}>
                 {copied ? <CheckCircle size={13} /> : <Copy size={13} />}
               </button>
             </div>
+            <button onClick={() => setSidebarOpen(o => !o)} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.5rem', cursor: 'pointer', color: 'var(--text-primary)' }} className="lg:hidden">
+              <Menu size={20} />
+            </button>
           </div>
         </div>
 

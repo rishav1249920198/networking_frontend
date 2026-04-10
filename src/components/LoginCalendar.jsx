@@ -99,7 +99,7 @@ export default function LoginCalendar({ isOpen, onClose, onCheckInSuccess }) {
           {/* Header */}
           <div className="p-6 pb-4 flex items-center justify-between border-b border-white/5 bg-gradient-to-r from-primary/5 to-transparent">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-gold to-yellow-600 flex items-center justify-center text-white shadow-lg shadow-gold/20">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#F4A261] to-[#E76F51] flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
                 <Gift size={24} className="animate-bounce" />
               </div>
               <div>

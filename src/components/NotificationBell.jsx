@@ -84,10 +84,8 @@ const NotificationBell = ({ scope = 'student' }) => {
     <div className="notification-bell-container" style={{ position: 'relative' }} ref={dropdownRef}>
       <button 
         onClick={toggleDropdown}
+        className="glass-card"
         style={{ 
-          background: 'white', 
-          border: '1px solid rgba(10,36,99,0.1)', 
-          borderRadius: '10px', 
           width: '40px', 
           height: '40px', 
           display: 'flex', 
@@ -95,7 +93,9 @@ const NotificationBell = ({ scope = 'student' }) => {
           justifyContent: 'center',
           cursor: 'pointer',
           position: 'relative',
-          color: '#0A2463'
+          color: 'var(--text-primary)',
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border)'
         }}
       >
         {unreadCount > 0 ? <BellDot size={20} color="#ef4444" /> : <Bell size={20} />}
@@ -110,7 +110,7 @@ const NotificationBell = ({ scope = 'student' }) => {
             fontWeight: '800', 
             padding: '2px 5px', 
             borderRadius: '20px',
-            border: '2px solid white'
+            border: '2px solid var(--bg-card)'
           }}>
             {unreadCount}
           </span>
@@ -146,13 +146,13 @@ const NotificationBell = ({ scope = 'student' }) => {
                     style={{ 
                       padding: '0.875rem 1rem', 
                       borderBottom: '1px solid var(--border)',
-                      background: n.is_read ? 'transparent' : 'rgba(0,180,216,0.03)',
+                      background: n.is_read ? 'transparent' : 'rgba(0,180,216,0.05)',
                       cursor: 'pointer',
                       transition: 'background 0.2s'
                     }}
                     className="notification-item"
-                    onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-                    onMouseLeave={e => e.currentTarget.style.background = n.is_read ? 'transparent' : 'rgba(0,180,216,0.03)'}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg)'}
+                    onMouseLeave={e => e.currentTarget.style.background = n.is_read ? 'transparent' : 'rgba(0,180,216,0.05)'}
                   >
                     <div style={{ display: 'flex', gap: '0.75rem' }}>
                       <div style={{ 
