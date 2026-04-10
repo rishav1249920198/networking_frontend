@@ -14,6 +14,15 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(() => localStorage.getItem('igcim_token') || null);
   const [loading, setLoading] = useState(!!token);
 
+  const logout = useCallback(async () => {
+    try { await api.post('/auth/logout'); } catch (e) { /* ignore network error on logout */ }
+    localStorage.removeItem('igcim_token');
+    localStorage.removeItem('igcim_user');
+    setToken(null);
+    setUser(null);
+    window.location.href = '/login';
+  }, []);
+
   // Auto-sync user profile if token exists
   useEffect(() => {
     const syncUser = async () => {
@@ -95,15 +104,6 @@ export const AuthProvider = ({ children }) => {
     setToken(newToken);
     setUser(newUser);
     return newUser;
-  }, []);
-
-  const logout = useCallback(async () => {
-    try { await api.post('/auth/logout'); } catch (e) { /* ignore network error on logout */ }
-    localStorage.removeItem('igcim_token');
-    localStorage.removeItem('igcim_user');
-    setToken(null);
-    setUser(null);
-    window.location.href = '/login';
   }, []);
 
   const updateUser = useCallback((updatedUser) => {

@@ -184,7 +184,7 @@ export default function StudentDashboard() {
     } finally {
       if (showLoading) setLoading(false);
     }
-  }, []); // Static function, only trigger via useEffect dependencies
+  }, [active]); // Re-create if active tab changes to ensure correct form handling
 
   // Auto-refresh on tab change or window focus
   useEffect(() => {

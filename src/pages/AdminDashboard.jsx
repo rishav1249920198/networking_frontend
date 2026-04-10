@@ -41,6 +41,7 @@ export default function AdminDashboard() {
   const [courseForm, setCourseForm] = useState({ name: '', category: 'computer', description: '', duration_months: '', fee: '', commission_percent: '10', commission_ic: '' });
   const [editingCourse, setEditingCourse] = useState(null); 
   const [enrollModal, setEnrollModal] = useState(null); 
+  const [enrollCourseId, setEnrollCourseId] = useState('');
   const [settings, setSettings] = useState({ ic_conversion_rate: '1.0' });
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [error, setError] = useState(null);
