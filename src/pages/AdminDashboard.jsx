@@ -50,7 +50,7 @@ export default function AdminDashboard() {
     if (showLoading) setLoading(true);
     setError(null);
     try {
-      const isSuperOrAdmin = ['super_admin', 'admin'].includes(user?.role);
+      const isSuperOrAdmin = ['super_admin', 'admin', 'co-admin'].includes(user?.role);
       const reqs = [
         api.get('/dashboard/admin'),
         api.get('/admissions?limit=20'),
@@ -60,27 +60,41 @@ export default function AdminDashboard() {
         api.get('/commissions/withdrawals?limit=50'),
         api.get('/settings'),
       ];
-      
       if (isSuperOrAdmin) reqs.push(api.get('/users'));
+
+      const results = await Promise.allSettled(reqs);
       
-      const responses = await Promise.all(reqs);
-      
-      setData(responses[0].data.data);
-      setAdmissions(responses[1].data.data || []);
-      setCourses(responses[2].data.data || []);
-      setUsers(responses[3].data.data || []);
-      setPendingRefs(responses[4].data.data || []);
-      setWithdrawals(responses[5].data.data || []);
-      if (responses[6]) setSettings(responses[6].data.data || { ic_conversion_rate: '1.0' });
-      if (isSuperOrAdmin && responses[7]) {
-        setAllUsers(responses[7].data.data || []);
+      // Map results to state, logging any failures
+      results.forEach((res, i) => {
+        if (res.status === 'rejected') {
+          console.error(`Admin Fetch Error (${i}):`, res.reason);
+        }
+      });
+
+      if (results[0].status === 'fulfilled') setData(results[0].value.data.data);
+      if (results[1].status === 'fulfilled') setAdmissions(results[1].value.data.data || []);
+      if (results[2].status === 'fulfilled') setCourses(results[2].value.data.data || []);
+      if (results[3].status === 'fulfilled') setUsers(results[3].value.data.data || []);
+      if (results[4].status === 'fulfilled') setPendingRefs(results[4].value.data.data || []);
+      if (results[5].status === 'fulfilled') setWithdrawals(results[5].value.data.data || []);
+      if (results[6].status === 'fulfilled') setSettings(results[6].value.data.data || { ic_conversion_rate: '1.0' });
+      if (isSuperOrAdmin && results[7]?.status === 'fulfilled') {
+        setAllUsers(results[7].value.data.data || []);
       }
+
+      // If critical overview data failed, trigger error state
+      if (results[0].status === 'rejected') {
+        throw new Error('Critical dashboard data failed to load');
+      }
+
     } catch (e) { 
-      console.error(e);
-      setError('Failed to fetch admin data. Please check your connection.');
-      toast.error('Data loading failed');
+      console.error('Admin Load Error:', e);
+      const msg = e.response?.data?.message || 'Data sync failed. Please refresh.';
+      setError(msg);
+      toast.error(msg);
+    } finally { 
+      if (showLoading) setLoading(false); 
     }
-    finally { if (showLoading) setLoading(false); }
   }, [user?.role]); // Only recreate if user role changes
 
   // Auto-refresh on tab change or window focus

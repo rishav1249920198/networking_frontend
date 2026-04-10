@@ -136,31 +136,28 @@ export default function StudentDashboard() {
     if (showLoading) setLoading(true);
     setError(null);
     try {
-      const [dash, statsRes, earn, refs, tree, adms, crs, withdrawalsRes, settingsRes, bonusesRes, profileRes] = await Promise.all([
+      // Parallel fetch for speed
+      const [dash, statsRes, earn, refs, tree, withdrawalsRes, settingsRes, bonusesRes, profileRes] = await Promise.all([
         api.get('/dashboard/student'),
         api.get('/dashboard/stats'),
         api.get('/commissions/summary'),
         api.get('/referrals/stats'),
         api.get('/referrals/tree'),
-        api.get('/admissions?limit=50'),
-        api.get('/courses'), // public list
         api.get('/commissions/withdrawals?limit=50'),
         api.get('/settings'),
         api.get('/users/bonuses'),
         api.get('/users/profile')
       ]);
+
       setData(dash.data.data);
       setStats(statsRes.data.data);
       setEarnings(earn.data.data);
       setReferralStats(refs.data.data);
       setReferralTree(tree.data.data);
-      setAdmissions(adms.data.data || []);
-      setCourses(crs.data.data || []);
       setWithdrawals(withdrawalsRes.data.data || []);
       setBonuses(bonusesRes.data.data || []);
       if (settingsRes) setSettings(settingsRes.data.data || { ic_conversion_rate: '1.0' });
       
-      // Only update profile form if user is not currently editing it or if it's initial load
       const currentProfile = profileRes.data.data || {};
       if (active !== 'profile') {
         setProfileForm({
@@ -171,9 +168,11 @@ export default function StudentDashboard() {
         });
       }
     } catch (err) {
-      console.error('Dashboard load error', err);
-      setError('Failed to load dashboard data. Please try again.');
-      toast.error('Failed to load dashboard data');
+      console.error('Critical Dashboard Fetch Failure:', err);
+      // Determine what exactly failed for better user feedback
+      const errorMsg = err.response?.data?.message || 'Connection lost. Retrying...';
+      setError('Dashboard unavailable. Please check your connection.');
+      toast.error(errorMsg);
     } finally {
       if (showLoading) setLoading(false);
     }
