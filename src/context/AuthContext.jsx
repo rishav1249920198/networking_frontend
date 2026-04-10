@@ -35,7 +35,8 @@ export const AuthProvider = ({ children }) => {
             role: freshUser.role,
             centreId: freshUser.centre_id,
             referralCode: freshUser.referral_code,
-            profilePhoto: freshUser.profile_photo
+            profilePhoto: freshUser.profile_photo,
+            profileCompleted: freshUser.profile_completed
           };
           
           localStorage.setItem('igcim_user', JSON.stringify(normalizedUser));
@@ -52,7 +53,23 @@ export const AuthProvider = ({ children }) => {
     };
 
     syncUser();
-  }, [token]);
+
+    // Cross-tab Synchronization
+    const handleStorageChange = (e) => {
+      if (e.key === 'igcim_user') {
+        setUser(e.newValue ? JSON.parse(e.newValue) : null);
+      }
+      if (e.key === 'igcim_token') {
+        setToken(e.newValue);
+        if (!e.newValue) {
+          window.location.href = '/login';
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [token, logout]);
 
   const login = useCallback(async (email, password) => {
     const res = await api.post('/auth/login', { email, password });

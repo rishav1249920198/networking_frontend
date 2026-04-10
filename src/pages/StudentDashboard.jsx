@@ -88,7 +88,7 @@ const Sidebar = ({ active, setActive, sidebarOpen, setSidebarOpen }) => {
 };
 
 export default function StudentDashboard() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const [active, setActive] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [data, setData] = useState(null);
@@ -139,53 +139,61 @@ export default function StudentDashboard() {
     return () => observer.disconnect();
   }, [active, referralTree]);
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const [dash, statsRes, earn, refs, tree, adms, crs, withdrawalsRes, settingsRes, bonusesRes, profileRes] = await Promise.all([
-          api.get('/dashboard/student'),
-          api.get('/dashboard/stats'),
-          api.get('/commissions/summary'),
-          api.get('/referrals/stats'),
-          api.get('/referrals/tree'),
-          api.get('/admissions?limit=50'),
-          api.get('/courses'), // public list
-          api.get('/commissions/withdrawals?limit=50'),
-          api.get('/settings'),
-          api.get('/users/bonuses'),
-          api.get('/users/profile')
-        ]);
-        setData(dash.data.data);
-        setStats(statsRes.data.data);
-        setEarnings(earn.data.data);
-        setReferralStats(refs.data.data);
-        setReferralTree(tree.data.data);
-        setAdmissions(adms.data.data || []);
-        setCourses(crs.data.data || []);
-        setWithdrawals(withdrawalsRes.data.data || []);
-        setBonuses(bonusesRes.data.data || []);
-        if (settingsRes) setSettings(settingsRes.data.data || { ic_conversion_rate: '1.0' });
-        
-        // Load profile data into form
-        const currentProfile = profileRes.data.data || {};
+  const loadData = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
+    setError(null);
+    try {
+      const [dash, statsRes, earn, refs, tree, adms, crs, withdrawalsRes, settingsRes, bonusesRes, profileRes] = await Promise.all([
+        api.get('/dashboard/student'),
+        api.get('/dashboard/stats'),
+        api.get('/commissions/summary'),
+        api.get('/referrals/stats'),
+        api.get('/referrals/tree'),
+        api.get('/admissions?limit=50'),
+        api.get('/courses'), // public list
+        api.get('/commissions/withdrawals?limit=50'),
+        api.get('/settings'),
+        api.get('/users/bonuses'),
+        api.get('/users/profile')
+      ]);
+      setData(dash.data.data);
+      setStats(statsRes.data.data);
+      setEarnings(earn.data.data);
+      setReferralStats(refs.data.data);
+      setReferralTree(tree.data.data);
+      setAdmissions(adms.data.data || []);
+      setCourses(crs.data.data || []);
+      setWithdrawals(withdrawalsRes.data.data || []);
+      setBonuses(bonusesRes.data.data || []);
+      if (settingsRes) setSettings(settingsRes.data.data || { ic_conversion_rate: '1.0' });
+      
+      // Only update profile form if user is not currently editing it or if it's initial load
+      const currentProfile = profileRes.data.data || {};
+      if (active !== 'profile') {
         setProfileForm({
           full_name: currentProfile.full_name || '',
           education: currentProfile.education || '',
           address: currentProfile.address || '',
           bio: currentProfile.bio || ''
         });
-      } catch (err) {
-        console.error('Dashboard load error', err);
-        setError('Failed to load dashboard data. Please try again.');
-        toast.error('Failed to load dashboard data');
-      } finally {
-        setLoading(false);
       }
-    };
-    load();
-  }, []);
+    } catch (err) {
+      console.error('Dashboard load error', err);
+      setError('Failed to load dashboard data. Please try again.');
+      toast.error('Failed to load dashboard data');
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  }, []); // Static function, only trigger via useEffect dependencies
+
+  // Auto-refresh on tab change or window focus
+  useEffect(() => {
+    loadData();
+
+    const onFocus = () => loadData(false);
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [loadData, active]);
 
   const copyReferralCode = () => {
     navigator.clipboard.writeText(user?.referralCode || '');
@@ -203,13 +211,15 @@ export default function StudentDashboard() {
     try {
       const res = await api.post('/users/check-in');
       toast.success(res.data.message);
-      // Reload earnings & bonuses to show update
-      const [earnRes, bonRes] = await Promise.all([
-        api.get('/commissions/summary'),
-        api.get('/users/bonuses')
-      ]);
-      setEarnings(earnRes.data.data);
-      setBonuses(bonRes.data.data || []);
+      
+      // Optimistic Stats Patch (Instant +10 IC)
+      setStats(prev => ({
+        ...prev,
+        total_commission: (prev.total_commission || 0) + (0.10 * (settings.ic_conversion_rate || 1))
+      }));
+
+      // Reload everything in background to be 100% sure
+      await loadData(false);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Check-in failed');
     }
@@ -263,9 +273,8 @@ export default function StudentDashboard() {
       setShowAdmissionModal(false);
       setAdmissionForm({ course_id: '', payment_mode: 'upi', payment_reference: '', payment_proof: null });
       
-      // reload admissions
-      const admRes = await api.get('/admissions?limit=50');
-      setAdmissions(admRes.data.data || []);
+      // Full refresh to update "Pending Leads" stat card instantly
+      await loadData(false);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to submit admission');
     }
@@ -808,17 +817,38 @@ export default function StudentDashboard() {
                       </div>
                     </div>
 
+                    {/* Temporary Debug Row for Troubleshooting */}
+                    <div style={{ background: 'var(--bg)', border: '1px dashed var(--primary)', borderRadius: '10px', padding: '1rem', marginBottom: '1.5rem', display: 'flex', gap: '2rem', fontSize: '0.8rem' }}>
+                      <div><strong>Debug Info:</strong></div>
+                      <div>User ID: <span style={{ fontFamily: 'monospace' }}>{user?.id}</span></div>
+                      <div>Profile Completed: <span style={{ fontWeight: '800', color: user?.profileCompleted ? '#10b981' : '#ef4444' }}>{user?.profileCompleted ? 'TRUE' : 'FALSE'}</span></div>
+                      <div>Total Comm (INR): <span style={{ fontWeight: '800', color: 'var(--primary)' }}>{stats?.total_commission}</span></div>
+                    </div>
+
                     <form onSubmit={async (e) => {
                       e.preventDefault();
                       setProfileLoading(true);
                       try {
                         const res = await api.patch('/users/profile', profileForm);
                         toast.success(res.data.message);
-                        if (res.data.bonus_granted) toast.success('🎁 +100 IC Profile Bonus Credited!');
                         
-                        // Reload dashboard to update stats
-                        const dashRes = await api.get('/dashboard/student');
-                        setData(dashRes.data.data);
+                        // 1. Optimistic Context Sync (Instant Name Change)
+                        if (res.data.updatedUser) {
+                          updateUser(res.data.updatedUser);
+                        }
+
+                        // 2. Optimistic Stats Patch (Instant +₹1.00)
+                        if (res.data.bonus_granted) {
+                          setStats(prev => ({
+                            ...prev,
+                            total_commission: (prev.total_commission || 0) + 1.00
+                          }));
+                          toast.success('🎁 +100 IC Profile Bonus Credited!');
+                        }
+
+                        // 3. Force LocalStorage Sync & Background fetch
+                        localStorage.setItem('igcim_user', JSON.stringify({ ...user, ...res.data.updatedUser }));
+                        await loadData(false);
                       } catch (err) {
                         toast.error(err.response?.data?.message || 'Update failed');
                       } finally {
@@ -849,7 +879,7 @@ export default function StudentDashboard() {
 
                       <div style={{ paddingTop: '1rem', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
                         <button type="submit" disabled={profileLoading} className="btn-primary" style={{ padding: '0.75rem 2rem', height: 'auto' }}>
-                          {profileLoading ? 'Saving...' : 'Update & Claim Bonus'}
+                          {profileLoading ? 'Saving...' : (user?.profileCompleted ? 'Save Changes' : 'Update & Claim Bonus')}
                         </button>
                       </div>
                     </form>
@@ -877,9 +907,10 @@ export default function StudentDashboard() {
                 await api.post('/commissions/withdraw', withdrawForm);
                 setWithdrawModal(false);
                 setWithdrawForm({ amount: '', upi_id: '' });
-                const earnRes = await api.get('/commissions/summary');
-                setEarnings(earnRes.data.data);
                 toast.success('Withdrawal request submitted!');
+                
+                // Full refresh to update "Balance IC" instantly
+                await loadData(false);
               } catch (err) {
                 toast.error(err.response?.data?.message || 'Failed to submit request');
               } finally {

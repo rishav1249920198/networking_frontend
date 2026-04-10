@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -45,8 +45,8 @@ export default function AdminDashboard() {
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     setError(null);
     try {
       const isSuperOrAdmin = ['super_admin', 'admin'].includes(user?.role);
@@ -79,16 +79,23 @@ export default function AdminDashboard() {
       setError('Failed to fetch admin data. Please check your connection.');
       toast.error('Data loading failed');
     }
-    finally { setLoading(false); }
-  };
+    finally { if (showLoading) setLoading(false); }
+  }, [user?.role]); // Only recreate if user role changes
 
-  useEffect(() => { loadData(); }, []);
+  // Auto-refresh on tab change or window focus
+  useEffect(() => { 
+    loadData();
+
+    const onFocus = () => loadData(false);
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [loadData, active]);
 
   const approveAdmission = async (id) => {
     try {
       await api.patch(`/admissions/${id}/approve`);
       toast.success('Admission approved and commission generated!');
-      loadData();
+      await loadData(false);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to approve admission.');
     }
@@ -100,7 +107,7 @@ export default function AdminDashboard() {
     try {
       await api.patch(`/admissions/${id}/reject`, { rejection_reason: reason });
       toast.success('Admission rejected.');
-      loadData();
+      await loadData(false);
     } catch (err) {
       toast.error('Failed to reject admission.');
     }
@@ -123,8 +130,7 @@ export default function AdminDashboard() {
       setEditingCourse(null);
       setCourseForm({ name: '', category: 'computer', description: '', duration_months: '', fee: '', commission_percent: '10', commission_ic: '' });
       
-      const res = await api.get('/courses');
-      setCourses(res.data.data || []);
+      await loadData(false);
     } catch (err) {
       toast.error(err.response?.data?.message || `Failed to ${editingCourse ? 'update' : 'create'} course.`);
     }
@@ -148,8 +154,7 @@ export default function AdminDashboard() {
     try {
       await api.put(`/courses/${c.id}`, { ...c, is_active: !c.is_active });
       c.is_active ? toast.success('Course deactivated.') : toast.success('Course activated.');
-      const res = await api.get('/courses');
-      setCourses(res.data.data || []);
+      await loadData(false);
     } catch (err) {
       toast.error('Failed to update course status.');
     }
@@ -191,6 +196,7 @@ export default function AdminDashboard() {
     try {
       await api.put('/settings', settings);
       toast.success('Reward settings updated.');
+      await loadData(false); // Refresh after update
     } catch (err) {
       toast.error('Failed to update settings.');
     } finally {
