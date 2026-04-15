@@ -727,7 +727,7 @@ export default function StudentDashboard() {
                       </div>
                       <div>
                         <h2 style={{ fontSize: '1.25rem', fontWeight: '800', fontFamily: 'Outfit', color: 'var(--text-primary)' }}>Personal Profile</h2>
-                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Complete your profile to earn one-time reward of 100 IC.</p>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Complete your profile to earn a one-time reward of ₹100 (100 IC).</p>
                       </div>
                     </div>
 
@@ -745,13 +745,13 @@ export default function StudentDashboard() {
                           updateUser(res.data.updatedUser);
                         }
 
-                        // 2. Optimistic Stats Patch (Instant +₹1.00)
+                        // 2. Optimistic Stats Patch (Instant +₹100 = 100 IC)
                         if (res.data.bonus_granted) {
                           setStats(prev => ({
                             ...prev,
-                            total_commission: (prev.total_commission || 0) + 1.00
+                            total_commission: (prev.total_commission || 0) + 100.00
                           }));
-                          toast.success('🎁 +100 IC Profile Bonus Credited!');
+                          toast.success('🎁 +₹100 Profile Bonus Credited!');
                         }
 
                         // 3. Force LocalStorage Sync & Background fetch
@@ -836,7 +836,7 @@ export default function StudentDashboard() {
                 </div>
                 {withdrawForm.amount && (
                   <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#10b981', fontWeight: '600' }}>
-                     ≈ ₹{parseFloat(withdrawForm.amount * settings.ic_conversion_rate).toLocaleString()}
+                     = ₹{parseFloat(withdrawForm.amount).toLocaleString()} (1 IC = ₹1)
                   </div>
                 )}
               </div>

@@ -521,7 +521,7 @@ export default function AdminDashboard() {
                       </div>
                       <p style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                         This rate defines how many Indian Rupees (₹) a student receives for each IGCIM Credit (IC) during withdrawal. 
-                        <strong> Current:</strong> 100 IC = ₹{parseFloat(settings.ic_conversion_rate * 100).toLocaleString()}.
+                        <strong> Current:</strong> 1 IC = ₹{parseFloat(settings.ic_conversion_rate).toLocaleString()}.
                       </p>
                     </div>
 

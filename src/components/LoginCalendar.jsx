@@ -137,7 +137,7 @@ export default function LoginCalendar({ isOpen, onClose, onCheckInSuccess }) {
                   letterSpacing: '0.03em',
                   marginTop: '1px'
                 }}>
-                  7-Day Login Cycle
+                  Earn ₹10 daily · 1 IC = ₹1
                 </p>
               </div>
             </div>
@@ -176,7 +176,7 @@ export default function LoginCalendar({ isOpen, onClose, onCheckInSuccess }) {
                 fontWeight: 700, 
                 color: 'var(--text-primary)',
               }}>
-                {claimedCount}/7 days
+                  {claimedCount}/7 days
               </span>
             </div>
             <div style={{
@@ -294,9 +294,8 @@ export default function LoginCalendar({ isOpen, onClose, onCheckInSuccess }) {
                         color: isClaimed ? 'rgba(255,255,255,0.75)' : 'var(--text-secondary)',
                         opacity: isMissed ? 0.7 : 1,
                       }}>
-                        10
+                        ₹10
                       </span>
-                      <ICIcon size={isMobile ? 8 : 10} />
                     </div>
 
                     {/* Today indicator dot */}
@@ -354,7 +353,7 @@ export default function LoginCalendar({ isOpen, onClose, onCheckInSuccess }) {
                     color: 'var(--text-primary)',
                     fontFamily: "'Outfit', sans-serif",
                   }}>
-                    10 <ICIcon size={16} /> Today's Reward
+                    ₹10 <ICIcon size={16} /> Today's Reward
                   </div>
                   <div style={{
                     fontSize: '0.72rem',
@@ -429,7 +428,7 @@ export default function LoginCalendar({ isOpen, onClose, onCheckInSuccess }) {
               fontWeight: 500,
               letterSpacing: '0.03em',
             }}>
-              Login daily to grow your IC balance
+              Login daily · 1 IC = ₹1 · Earn ₹70/week
             </p>
           </div>
         </motion.div>
