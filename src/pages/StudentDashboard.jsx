@@ -7,7 +7,7 @@ import {
 import {
   Users, TrendingUp, DollarSign, Clock, LogOut, Monitor, LayoutDashboard,
   BookOpen, Link2, Wallet, Settings, Menu, X, Copy, CheckCircle, IndianRupee, Plus, Layout, Trophy, Coins,
-  AlertCircle, RefreshCw
+  AlertCircle, RefreshCw, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import Leaderboard from '../components/Leaderboard';
 import toast from 'react-hot-toast';
@@ -103,6 +103,9 @@ export default function StudentDashboard() {
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [withdrawals, setWithdrawals] = useState([]);
   const [bonuses, setBonuses] = useState([]);
+  const [commissions, setCommissions] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [showCalendar, setShowCalendar] = useState(false);
 
   const [settings, setSettings] = useState({ ic_conversion_rate: '1.0' });
@@ -139,7 +142,7 @@ export default function StudentDashboard() {
     setError(null);
     try {
       // Parallel fetch for speed
-      const [dash, statsRes, earn, refs, tree, withdrawalsRes, settingsRes, bonusesRes, profileRes] = await Promise.all([
+      const [dash, statsRes, earn, refs, tree, withdrawalsRes, settingsRes, bonusesRes, profileRes, commsRes] = await Promise.all([
         api.get('/dashboard/student'),
         api.get('/dashboard/stats'),
         api.get('/commissions/summary'),
@@ -148,7 +151,8 @@ export default function StudentDashboard() {
         api.get('/commissions/withdrawals?limit=50'),
         api.get('/settings'),
         api.get('/users/bonuses'),
-        api.get('/users/profile')
+        api.get('/users/profile'),
+        api.get(`/commissions?page=${page}&limit=5`)
       ]);
 
       setData(dash.data.data);
@@ -158,6 +162,10 @@ export default function StudentDashboard() {
       setReferralTree(tree.data.data);
       setWithdrawals(withdrawalsRes.data.data || []);
       setBonuses(bonusesRes.data.data || []);
+      setCommissions(commsRes.data.data || []);
+      if (commsRes.data.pagination) {
+        setTotalPages(Math.ceil(commsRes.data.pagination.total / commsRes.data.pagination.limit));
+      }
       if (settingsRes) setSettings(settingsRes.data.data || { ic_conversion_rate: '1.0' });
       
       const currentProfile = profileRes.data.data || {};
@@ -178,7 +186,7 @@ export default function StudentDashboard() {
     } finally {
       if (showLoading) setLoading(false);
     }
-  }, [active]); // Re-create if active tab changes to ensure correct form handling
+  }, [active, page]); // Re-create if active tab or page changes
 
   // Auto-refresh on tab change or window focus
   useEffect(() => {
@@ -573,16 +581,41 @@ export default function StudentDashboard() {
                               <ICIcon size={24} /> {parseFloat((earnings?.summary?.paid_earnings || 0) / (settings.ic_conversion_rate || 1)).toLocaleString()}
                             </div>
                           ), color: '#ef4444' },
-                          { label: 'Commission Tier', value: (
-                            <div style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-primary)' }}>
-                              {(stats?.total_admissions || 0) >= 15 ? 'Platinum (+0.35%)' : 
-                               (stats?.total_admissions || 0) >= 10 ? 'Gold (+0.20%)' :
-                               (stats?.total_admissions || 0) >= 5 ? 'Silver (+0.10%)' : 'Standard (+0.0%)'}
-                            </div>
-                          ), color: '#8b5cf6' },
+                          { label: 'Commission Tier', value: (() => {
+                            const adm = stats?.total_admissions || 0;
+                            let currentTier = 'Standard';
+                            let nextTier = 'Silver';
+                            let max = 5;
+                            let percent = (adm / max) * 100;
+                            if (adm >= 15) { currentTier = 'Platinum (+0.35%)'; nextTier = 'Max'; max = 15; percent = 100; }
+                            else if (adm >= 10) { currentTier = 'Gold (+0.20%)'; nextTier = 'Platinum'; max = 15; percent = ((adm - 10) / 5) * 100; }
+                            else if (adm >= 5) { currentTier = 'Silver (+0.10%)'; nextTier = 'Gold'; max = 10; percent = ((adm - 5) / 5) * 100; }
+                            
+                            return (
+                              <div style={{ width: '100%', minWidth: '150px' }}>
+                                <div style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '4px' }}>
+                                  {currentTier}
+                                </div>
+                                {adm < 15 && (
+                                  <div style={{ width: '100%', height: '6px', background: 'var(--border)', borderRadius: '4px', overflow: 'hidden', position: 'relative' }}>
+                                    <motion.div 
+                                      initial={{ width: 0 }} 
+                                      animate={{ width: `${percent}%` }} 
+                                      style={{ height: '100%', background: 'linear-gradient(90deg, #8b5cf6, #c084fc)', borderRadius: '4px' }} 
+                                    />
+                                  </div>
+                                )}
+                                {adm < 15 && (
+                                  <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '4px', fontWeight: '600' }}>
+                                    {adm} / {max} for {nextTier}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })(), color: '#8b5cf6' },
                         ].map(s => (
-                          <div key={s.label}>
-                            <div style={{ fontSize: '1.5rem', fontWeight: '800', color: s.color, fontFamily: 'Outfit' }}>{s.value}</div>
+                          <div key={s.label} style={s.label === 'Commission Tier' ? { gridColumn: '1 / -1', maxWidth: '300px', marginTop: '4px' } : {}}>
+                            <div style={s.label !== 'Commission Tier' ? { fontSize: '1.5rem', fontWeight: '800', color: s.color, fontFamily: 'Outfit' } : {}}>{s.value}</div>
                             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '500' }}>{s.label}</div>
                           </div>
                         ))}
@@ -609,6 +642,49 @@ export default function StudentDashboard() {
                       )}
                     </div>
                     
+                    <div style={{ marginTop: '2.5rem' }}>
+                      <h4 style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.9rem', marginBottom: '1rem' }}>Commission History</h4>
+                      <div className="table-responsive">
+                        <table className="data-table">
+                          <thead>
+                            <tr><th>Admission</th><th>Course Fee</th><th>Earned (IC)</th><th>Status</th><th>Date</th></tr>
+                          </thead>
+                          <tbody>
+                            {commissions.length === 0 ? (
+                              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No commissions earned yet.</td></tr>
+                            ) : commissions.map(c => (
+                              <tr key={c.id}>
+                                <td>
+                                  <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{c.student_name}</div>
+                                  <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{c.course_name}</div>
+                                </td>
+                                <td>₹{parseFloat(c.snapshot_fee).toLocaleString()}</td>
+                                <td style={{ fontWeight: '700', color: '#10b981' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                    <ICIcon size={14} /> {parseFloat(c.amount / (settings.ic_conversion_rate || 1)).toLocaleString()}
+                                  </div>
+                                </td>
+                                <td><span className={`badge badge-${c.status}`}>{c.status}</span></td>
+                                <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{new Date(c.created_at).toLocaleDateString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      {/* Pagination Controls */}
+                      {totalPages > 1 && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
+                          <button disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))} className="btn-outline" style={{ padding: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <ChevronLeft size={16} />
+                          </button>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Page {page} of {totalPages}</span>
+                          <button disabled={page === totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))} className="btn-outline" style={{ padding: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <ChevronRight size={16} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
                     <div style={{ marginTop: '2.5rem' }}>
                       <h4 style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.9rem', marginBottom: '1rem' }}>Reward & milestone History</h4>
                       <div className="table-responsive">

@@ -396,6 +396,58 @@ export default function AdminDashboard() {
                     })}
                 </div>
 
+                {/* === CHARTS === */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', gap: '1.25rem', marginBottom: '1.5rem', width: '100%', minWidth: 0 }}>
+                  {/* Revenue vs Commission Chart */}
+                  <div style={{ background: 'var(--bg-card)', borderRadius: '16px', padding: '1.5rem', border: '1px solid var(--border)', minWidth: 0, overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+                      <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.95rem' }}>Revenue vs Commission Margin</h3>
+                      <span style={{ fontSize: '0.75rem', color: '#00B4D8', fontWeight: '600' }}>Last 6 months</span>
+                    </div>
+                    <ResponsiveContainer width="100%" height={260}>
+                      <AreaChart data={data?.monthlyMetrics || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                          </linearGradient>
+                          <linearGradient id="colorComm" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v}`} />
+                        <Tooltip formatter={(value) => `₹${parseFloat(value).toLocaleString()}`} contentStyle={{ borderRadius: '10px', border: '1px solid var(--border)', fontSize: '0.8rem', background: 'var(--bg-card)', color: 'var(--text-primary)' }} />
+                        <Area type="monotone" dataKey="revenue_collected" name="Gross Revenue" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRev)" />
+                        <Area type="monotone" dataKey="commission_paid" name="Commission Paid" stroke="#f59e0b" strokeWidth={2.5} fillOpacity={1} fill="url(#colorComm)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Course Popularity Chart */}
+                  <div style={{ background: 'var(--bg-card)', borderRadius: '16px', padding: '1.5rem', border: '1px solid var(--border)', minWidth: 0, overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+                      <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.95rem' }}>Popular Courses</h3>
+                      <span style={{ fontSize: '0.75rem', color: '#8b5cf6', fontWeight: '600' }}>By Enrollments</span>
+                    </div>
+                    <ResponsiveContainer width="100%" height={260}>
+                      <BarChart data={data?.popularCourses || []} margin={{ top: 10, right: 10, left: -20, bottom: 40 }}>
+                        <defs>
+                          <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.9}/>
+                            <stop offset="100%" stopColor="#6366f1" stopOpacity={0.6}/>
+                          </linearGradient>
+                        </defs>
+                        <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#94a3b8', angle: -30, textAnchor: 'end' }} axisLine={false} tickLine={false} interval={0} />
+                        <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                        <Tooltip contentStyle={{ borderRadius: '10px', border: '1px solid var(--border)', fontSize: '0.8rem', background: 'var(--bg-card)', color: 'var(--text-primary)' }} />
+                        <Bar dataKey="count" name="Enrollments" fill="url(#barGrad)" radius={[6, 6, 0, 0]} maxBarSize={40} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.25rem', marginBottom: '1.5rem', width: '100%', minWidth: 0 }}>
                   {/* Recent Admissions */}
                   <div style={{ background: 'var(--bg-card)', borderRadius: '16px', padding: '1.5rem', border: '1px solid var(--border)', minWidth: 0, maxWidth: '100%', overflow: 'hidden' }}>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, X, Gift, Sparkles } from 'lucide-react';
+import Confetti from 'react-confetti';
 import api from '../api/client';
 import toast from 'react-hot-toast';
 import ICIcon from './ICIcon';
@@ -9,6 +10,7 @@ export default function LoginCalendar({ isOpen, onClose, onCheckInSuccess }) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 480);
 
   useEffect(() => {
@@ -43,6 +45,11 @@ export default function LoginCalendar({ isOpen, onClose, onCheckInSuccess }) {
       setClaiming(true);
       const res = await api.post('/users/check-in');
       toast.success(res.data.message);
+      
+      // Trigger Gamefied Confetti!
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 4000);
+
       onCheckInSuccess?.();
       fetchHistory();
     } catch (err) {
@@ -81,6 +88,11 @@ export default function LoginCalendar({ isOpen, onClose, onCheckInSuccess }) {
 
   return (
     <AnimatePresence>
+      {showConfetti && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 1000, pointerEvents: 'none' }}>
+          <Confetti width={window.innerWidth} height={window.innerHeight} recycle={false} numberOfPieces={300} />
+        </div>
+      )}
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
