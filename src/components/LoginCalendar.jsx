@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, CheckCircle, X, ChevronLeft, ChevronRight, Gift, Sparkles } from 'lucide-react';
+import { CheckCircle, X, Gift, Sparkles } from 'lucide-react';
 import api from '../api/client';
 import toast from 'react-hot-toast';
 import ICIcon from './ICIcon';
 
 export default function LoginCalendar({ isOpen, onClose, onCheckInSuccess }) {
   const [history, setHistory] = useState([]);
-  const [currentDate, setCurrentDate] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 480);
@@ -21,11 +20,9 @@ export default function LoginCalendar({ isOpen, onClose, onCheckInSuccess }) {
   const fetchHistory = async () => {
     try {
       setLoading(true);
+      // Fetch last 7 days of history
       const res = await api.get('/users/check-in/history', {
-        params: {
-          month: currentDate.getMonth() + 1,
-          year: currentDate.getFullYear()
-        }
+        params: { days: 7 }
       });
       setHistory(res.data.data);
     } catch (err) {
@@ -39,7 +36,7 @@ export default function LoginCalendar({ isOpen, onClose, onCheckInSuccess }) {
     if (isOpen) {
       fetchHistory();
     }
-  }, [isOpen, currentDate]);
+  }, [isOpen]);
 
   const handleCheckIn = async () => {
     try {
@@ -55,41 +52,30 @@ export default function LoginCalendar({ isOpen, onClose, onCheckInSuccess }) {
     }
   };
 
-  const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
-  const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
-
-  const daysInMonth = getDaysInMonth(currentDate.getFullYear(), currentDate.getMonth());
-  const firstDay = getFirstDayOfMonth(currentDate.getFullYear(), currentDate.getMonth());
-  
-  const todayStr = new Date().toISOString().split('T')[0];
+  // Build 7-day cycle (today + 6 previous days)
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
   const isTodayClaimed = history.includes(todayStr);
 
   const days = [];
-  // Add empty slots for first day padding
-  for (let i = 0; i < firstDay; i++) {
-    days.push(null);
-  }
-  // Add actual days
-  for (let i = 1; i <= daysInMonth; i++) {
-    const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), i);
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(today.getDate() - i);
     const dateStr = date.toISOString().split('T')[0];
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     days.push({
-      day: i,
+      dayName: dayNames[date.getDay()],
+      dayNum: date.getDate(),
+      month: date.toLocaleString('default', { month: 'short' }),
       dateStr,
       isClaimed: history.includes(dateStr),
-      isToday: dateStr === todayStr,
-      isPast: date < new Date(todayStr),
-      isFuture: date > new Date(todayStr)
+      isToday: i === 0,
+      isPast: i > 0,
     });
   }
 
-  const nextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
-  };
-
-  const prevMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
-  };
+  // Count streak
+  const claimedCount = days.filter(d => d.isClaimed).length;
 
   if (!isOpen) return null;
 
@@ -99,143 +85,351 @@ export default function LoginCalendar({ isOpen, onClose, onCheckInSuccess }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-black/70 backdrop-blur-md"
+        className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4"
+        style={{ background: 'rgba(0, 0, 0, 0.6)', backdropFilter: 'blur(8px)' }}
         onClick={onClose}
       >
         <motion.div 
-          initial={{ scale: 0.9, y: 30 }}
-          animate={{ scale: 1, y: 0 }}
-          exit={{ scale: 0.9, y: 30 }}
-          className="w-full max-w-md max-h-[95vh] flex flex-col overflow-hidden rounded-[28px] shadow-[0_22px_70px_4px_rgba(0,0,0,0.56)] border border-white/10"
-          style={{ background: 'var(--bg-card)' }}
+          initial={{ scale: 0.95, y: 20, opacity: 0 }}
+          animate={{ scale: 1, y: 0, opacity: 1 }}
+          exit={{ scale: 0.95, y: 20, opacity: 0 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          className="w-full max-w-lg overflow-hidden"
+          style={{
+            background: 'var(--bg-card)',
+            borderRadius: '20px',
+            border: '1px solid var(--border)',
+            boxShadow: 'var(--shadow-lg)',
+          }}
           onClick={e => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="p-5 sm:p-6 pb-4 flex items-center justify-between border-b border-white/5 bg-gradient-to-r from-primary/10 to-transparent flex-shrink-0">
-            <div className="flex items-center gap-3 sm:gap-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-[#F4A261] to-[#E76F51] flex items-center justify-center text-white shadow-lg shadow-orange-500/30">
-                <Gift size={isMobile ? 20 : 24} className="animate-bounce" />
+          <div 
+            className="p-5 sm:p-6 flex items-center justify-between"
+            style={{ borderBottom: '1px solid var(--border)' }}
+          >
+            <div className="flex items-center gap-3">
+              <div 
+                className="w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center"
+                style={{
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
+                  color: 'white',
+                }}
+              >
+                <Gift size={isMobile ? 18 : 20} />
               </div>
               <div>
-                <h3 className="text-lg sm:text-xl font-black font-outfit leading-tight text-primary" style={{ color: 'var(--text-primary)' }}>Daily Rewards</h3>
-                <p className="text-[11px] sm:text-xs text-text-secondary font-bold uppercase tracking-wider opacity-70">Claim your 10 IC daily</p>
+                <h3 
+                  className="font-outfit leading-tight"
+                  style={{ 
+                    fontSize: isMobile ? '1.05rem' : '1.15rem', 
+                    fontWeight: 700, 
+                    color: 'var(--text-primary)' 
+                  }}
+                >
+                  Daily Rewards
+                </h3>
+                <p style={{ 
+                  fontSize: '0.72rem', 
+                  color: 'var(--text-secondary)', 
+                  fontWeight: 500,
+                  letterSpacing: '0.03em',
+                  marginTop: '1px'
+                }}>
+                  7-Day Login Cycle
+                </p>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 sm:p-2.5 hover:bg-danger/10 hover:text-danger rounded-xl transition-all text-text-secondary">
-              <X size={20} />
+            <button 
+              onClick={onClose} 
+              className="flex items-center justify-center transition-colors"
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
+                border: 'none',
+                background: 'transparent',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--border)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+              <X size={18} />
             </button>
           </div>
 
-          {/* Calendar Body - Scrollable */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar">
-            <div className="flex items-center justify-between mb-6 sm:mb-8">
-              <button onClick={prevMonth} className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-primary/10 rounded-xl transition-all text-primary">
-                <ChevronLeft size={22} />
-              </button>
-              <h4 className="font-extrabold text-lg sm:text-xl font-outfit text-primary" style={{ color: 'var(--text-primary)' }}>
-                {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
-              </h4>
-              <button onClick={nextMonth} className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-primary/10 rounded-xl transition-all text-primary">
-                <ChevronRight size={22} />
-              </button>
+          {/* Streak Progress */}
+          <div className="px-5 sm:px-6 pt-5" style={{ paddingBottom: '4px' }}>
+            <div className="flex items-center justify-between" style={{ marginBottom: '8px' }}>
+              <span style={{ 
+                fontSize: '0.75rem', 
+                fontWeight: 600, 
+                color: 'var(--text-secondary)',
+                letterSpacing: '0.02em'
+              }}>
+                Weekly Progress
+              </span>
+              <span style={{ 
+                fontSize: '0.75rem', 
+                fontWeight: 700, 
+                color: 'var(--text-primary)',
+              }}>
+                {claimedCount}/7 days
+              </span>
             </div>
+            <div style={{
+              width: '100%',
+              height: '4px',
+              borderRadius: '4px',
+              background: 'var(--border)',
+              overflow: 'hidden',
+            }}>
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${(claimedCount / 7) * 100}%` }}
+                transition={{ duration: 0.8, ease: 'easeOut', delay: 0.2 }}
+                style={{
+                  height: '100%',
+                  borderRadius: '4px',
+                  background: 'linear-gradient(90deg, var(--primary), var(--accent))',
+                }}
+              />
+            </div>
+          </div>
 
-            <div className="grid grid-cols-7 gap-1.5 sm:gap-2.5 mb-8">
-              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
-                <div key={d} className="text-[10px] sm:text-[11px] font-black text-text-secondary/60 text-center uppercase tracking-widest">{d}</div>
-              ))}
-              
+          {/* 7-Day Grid */}
+          <div className="px-5 sm:px-6 py-5">
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(7, 1fr)',
+              gap: isMobile ? '6px' : '10px',
+            }}>
               {days.map((d, i) => {
-                if (!d) return <div key={`empty-${i}`} className="aspect-square" />;
-                
-                let stateClass = "border-transparent bg-bg/40";
-                let iconColor = "text-text-secondary/20";
-                
-                if (d.isClaimed) {
-                  stateClass = "bg-success text-white border-success shadow-lg shadow-success/20";
-                } else if (d.isToday) {
-                  stateClass = "border-primary bg-primary/10 pulse-glow ring-2 ring-primary/20 scale-105 z-10";
-                  iconColor = "text-primary animate-pulse";
-                } else if (d.isPast) {
-                  stateClass = "bg-danger/5 border-danger/5 grayscale opacity-40";
-                  iconColor = "text-danger/40";
-                } else if (d.isFuture) {
-                  stateClass = "bg-border/5 border-border/5 opacity-20 cursor-not-allowed";
-                  iconColor = "text-text-secondary/10";
-                }
+                const isClaimed = d.isClaimed;
+                const isToday = d.isToday;
+                const isMissed = d.isPast && !d.isClaimed;
 
                 return (
-                  <div key={i} className="aspect-square flex items-center justify-center">
-                    <div 
-                      className={`
-                        w-full h-full rounded-xl sm:rounded-2xl flex flex-col items-center justify-center gap-0.5 sm:gap-1 border-2 transition-all duration-300
-                        ${stateClass}
-                      `}
-                    >
-                      <span className={`text-[10px] sm:text-xs font-black ${d.isClaimed ? 'text-white' : 'text-text-primary'}`}>{d.day}</span>
-                      {d.isClaimed ? (
-                        <CheckCircle size={isMobile ? 12 : 14} strokeWidth={3} />
+                  <motion.div
+                    key={d.dateStr}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05, duration: 0.3 }}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: isMobile ? '4px' : '6px',
+                      padding: isMobile ? '8px 2px' : '12px 4px',
+                      borderRadius: '14px',
+                      border: isToday 
+                        ? '2px solid var(--primary)' 
+                        : '1px solid var(--border)',
+                      background: isClaimed
+                        ? 'var(--primary)'
+                        : isToday
+                          ? 'color-mix(in srgb, var(--primary) 8%, transparent)'
+                          : 'transparent',
+                      position: 'relative',
+                      transition: 'all 0.2s ease',
+                      cursor: isToday && !isClaimed ? 'pointer' : 'default',
+                      opacity: isMissed ? 0.45 : 1,
+                    }}
+                  >
+                    {/* Day name */}
+                    <span style={{
+                      fontSize: isMobile ? '0.6rem' : '0.68rem',
+                      fontWeight: 600,
+                      color: isClaimed ? 'rgba(255,255,255,0.8)' : 'var(--text-secondary)',
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                    }}>
+                      {d.dayName}
+                    </span>
+
+                    {/* Day number / icon */}
+                    <div style={{
+                      width: isMobile ? '30px' : '36px',
+                      height: isMobile ? '30px' : '36px',
+                      borderRadius: '10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: isClaimed 
+                        ? 'rgba(255,255,255,0.2)' 
+                        : isToday
+                          ? 'color-mix(in srgb, var(--primary) 12%, transparent)'
+                          : 'var(--border)',
+                      transition: 'all 0.2s ease',
+                    }}>
+                      {isClaimed ? (
+                        <CheckCircle 
+                          size={isMobile ? 14 : 16} 
+                          strokeWidth={2.5} 
+                          color="white" 
+                        />
                       ) : (
-                        <div className={iconColor}><ICIcon size={isMobile ? 10 : 12} /></div>
+                        <span style={{
+                          fontSize: isMobile ? '0.78rem' : '0.85rem',
+                          fontWeight: 700,
+                          color: isToday ? 'var(--primary)' : 'var(--text-secondary)',
+                          fontFamily: "'Outfit', sans-serif",
+                        }}>
+                          {d.dayNum}
+                        </span>
                       )}
                     </div>
-                  </div>
+
+                    {/* Reward label */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '2px',
+                    }}>
+                      <span style={{
+                        fontSize: isMobile ? '0.58rem' : '0.65rem',
+                        fontWeight: 600,
+                        color: isClaimed ? 'rgba(255,255,255,0.75)' : 'var(--text-secondary)',
+                        opacity: isMissed ? 0.7 : 1,
+                      }}>
+                        10
+                      </span>
+                      <ICIcon size={isMobile ? 8 : 10} />
+                    </div>
+
+                    {/* Today indicator dot */}
+                    {isToday && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '4px',
+                        right: '4px',
+                        width: '6px',
+                        height: '6px',
+                        borderRadius: '50%',
+                        background: isClaimed ? 'rgba(255,255,255,0.8)' : 'var(--primary)',
+                      }} />
+                    )}
+                  </motion.div>
                 );
               })}
             </div>
+          </div>
 
-            {/* Claim Section - RESPONSIVE LAYOUT */}
-            <div className={`
-              relative p-1 rounded-[26px] bg-gradient-to-r from-primary/80 to-accent/80 overflow-hidden shadow-xl
-              ${isTodayClaimed ? 'opacity-80' : 'shadow-primary/20'}
-            `}>
-              <div className={`
-                bg-bg-card rounded-[24px] p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4
-                ${isMobile ? 'text-center' : ''}
-              `}>
-                <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} items-center gap-3 sm:gap-4`}>
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gold/10 flex items-center justify-center text-gold relative">
-                    <Sparkles size={isMobile ? 24 : 28} className={!isTodayClaimed ? 'animate-pulse' : ''} />
-                    {!isTodayClaimed && (
-                      <div className="absolute -top-1 -right-1 flex h-4 w-4">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-4 w-4 bg-gold"></span>
-                      </div>
-                    )}
+          {/* Claim Section */}
+          <div className="px-5 sm:px-6 pb-5 sm:pb-6">
+            <div style={{
+              padding: '16px 20px',
+              borderRadius: '14px',
+              border: '1px solid var(--border)',
+              background: 'color-mix(in srgb, var(--primary) 4%, var(--bg-card))',
+              display: 'flex',
+              alignItems: isMobile ? 'stretch' : 'center',
+              justifyContent: 'space-between',
+              flexDirection: isMobile ? 'column' : 'row',
+              gap: '14px',
+            }}>
+              <div className="flex items-center gap-3">
+                <div style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '12px',
+                  background: 'color-mix(in srgb, var(--gold) 15%, transparent)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--gold)',
+                  flexShrink: 0,
+                }}>
+                  <Sparkles size={20} />
+                </div>
+                <div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '1rem',
+                    fontWeight: 700,
+                    color: 'var(--text-primary)',
+                    fontFamily: "'Outfit', sans-serif",
+                  }}>
+                    10 <ICIcon size={16} /> Today's Reward
                   </div>
-                  <div>
-                    <div className="text-lg sm:text-xl font-black font-outfit text-primary flex items-center justify-center sm:justify-start gap-2" style={{ color: 'var(--text-primary)' }}>
-                      10 <ICIcon size={isMobile ? 16 : 18} /> Available
-                    </div>
-                    <div className="text-[11px] sm:text-xs font-bold text-text-secondary">Claim today's login reward</div>
+                  <div style={{
+                    fontSize: '0.72rem',
+                    color: 'var(--text-secondary)',
+                    fontWeight: 500,
+                    marginTop: '1px',
+                  }}>
+                    {isTodayClaimed ? 'Reward claimed for today' : 'Log in daily to earn rewards'}
                   </div>
                 </div>
-                
-                <button
-                  onClick={handleCheckIn}
-                  disabled={isTodayClaimed || claiming}
-                  className={`
-                    w-full sm:w-auto h-12 sm:h-14 px-8 rounded-2xl font-black font-outfit text-sm sm:text-base transition-all shadow-xl active:scale-95
-                    ${isTodayClaimed 
-                      ? 'bg-success/20 text-success cursor-default border-2 border-success/30 flex items-center justify-center gap-2' 
-                      : 'bg-gradient-to-br from-primary to-primary-dark text-white hover:scale-[1.03] hover:shadow-primary/40 focus:ring-4 focus:ring-primary/20'}
-                    ${claiming ? 'opacity-70 pointer-events-none' : ''}
-                  `}
-                >
-                  {claiming ? 'Processing...' : isTodayClaimed ? (
-                    <>Claimed <CheckCircle size={18} strokeWidth={3} /></>
-                  ) : 'CLAIM REWARD'}
-                </button>
               </div>
+              
+              <button
+                onClick={handleCheckIn}
+                disabled={isTodayClaimed || claiming}
+                style={{
+                  height: '42px',
+                  padding: '0 24px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  fontWeight: 700,
+                  fontSize: '0.82rem',
+                  fontFamily: "'Outfit', sans-serif",
+                  cursor: isTodayClaimed ? 'default' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s ease',
+                  flexShrink: 0,
+                  letterSpacing: '0.02em',
+                  ...(isTodayClaimed ? {
+                    background: 'color-mix(in srgb, var(--success) 12%, transparent)',
+                    color: 'var(--success)',
+                  } : {
+                    background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
+                    color: 'white',
+                    boxShadow: '0 2px 8px color-mix(in srgb, var(--primary) 30%, transparent)',
+                  }),
+                  ...(claiming ? { opacity: 0.6, pointerEvents: 'none' } : {}),
+                }}
+                onMouseEnter={e => {
+                  if (!isTodayClaimed) {
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                    e.currentTarget.style.boxShadow = '0 4px 14px color-mix(in srgb, var(--primary) 40%, transparent)';
+                  }
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  if (!isTodayClaimed) {
+                    e.currentTarget.style.boxShadow = '0 2px 8px color-mix(in srgb, var(--primary) 30%, transparent)';
+                  }
+                }}
+              >
+                {claiming ? 'Processing...' : isTodayClaimed ? (
+                  <>Claimed <CheckCircle size={15} strokeWidth={2.5} /></>
+                ) : 'Claim Reward'}
+              </button>
             </div>
           </div>
 
           {/* Footer */}
-          <div className="p-4 sm:p-5 text-center border-t border-white/5 bg-primary/5 flex-shrink-0">
-            <p className="text-[10px] sm:text-[11px] font-black text-text-secondary/60 uppercase tracking-widest flex items-center justify-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-success/40"></span>
-              Login daily to grow your balance
-              <span className="w-1.5 h-1.5 rounded-full bg-primary/40"></span>
+          <div style={{
+            padding: '12px 20px',
+            textAlign: 'center',
+            borderTop: '1px solid var(--border)',
+            background: 'color-mix(in srgb, var(--primary) 3%, transparent)',
+          }}>
+            <p style={{
+              fontSize: '0.68rem',
+              color: 'var(--text-secondary)',
+              fontWeight: 500,
+              letterSpacing: '0.03em',
+            }}>
+              Login daily to grow your IC balance
             </p>
           </div>
         </motion.div>
