@@ -727,7 +727,7 @@ export default function StudentDashboard() {
                       </div>
                       <div>
                         <h2 style={{ fontSize: '1.25rem', fontWeight: '800', fontFamily: 'Outfit', color: 'var(--text-primary)' }}>Personal Profile</h2>
-                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Complete your profile to earn a one-time reward of ₹100 (100 IC).</p>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Complete your profile to earn a one-time reward of 1.5 IC (₹1.50).</p>
                       </div>
                     </div>
 
@@ -745,13 +745,13 @@ export default function StudentDashboard() {
                           updateUser(res.data.updatedUser);
                         }
 
-                        // 2. Optimistic Stats Patch (Instant +₹100 = 100 IC)
+                        // 2. Optimistic Stats Patch (Instant +₹1.50 = 1.5 IC)
                         if (res.data.bonus_granted) {
                           setStats(prev => ({
                             ...prev,
-                            total_commission: (prev.total_commission || 0) + 100.00
+                            total_commission: (prev.total_commission || 0) + 1.50
                           }));
-                          toast.success('🎁 +₹100 Profile Bonus Credited!');
+                          toast.success('🎁 +1.5 IC Profile Bonus Credited!');
                         }
 
                         // 3. Force LocalStorage Sync & Background fetch
