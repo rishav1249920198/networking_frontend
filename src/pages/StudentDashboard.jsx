@@ -588,9 +588,26 @@ export default function StudentDashboard() {
                         ))}
                       </div>
                     </div>
-                    <button onClick={() => setWithdrawModal(true)} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem' }}>
-                      <Wallet size={16} /> Request Withdrawal
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <button 
+                        onClick={() => {
+                          if ((stats?.total_admissions || 0) < 1) {
+                            toast.error('You need at least 1 successful admission to request withdrawal.');
+                            return;
+                          }
+                          setWithdrawModal(true);
+                        }} 
+                        className="btn-primary" 
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', opacity: (stats?.total_admissions || 0) < 1 ? 0.6 : 1 }}
+                      >
+                        <Wallet size={16} /> Request Withdrawal
+                      </button>
+                      {(stats?.total_admissions || 0) < 1 && (
+                        <span style={{ fontSize: '0.75rem', color: '#f59e0b', fontWeight: '600' }}>
+                          ⚠️ Unlock withdrawals after your first successful admission
+                        </span>
+                      )}
+                    </div>
                     
                     <div style={{ marginTop: '2.5rem' }}>
                       <h4 style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.9rem', marginBottom: '1rem' }}>Reward & milestone History</h4>
@@ -831,7 +848,7 @@ export default function StudentDashboard() {
                   <div style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }}>
                     <ICIcon size={18} />
                   </div>
-                  <input type="number" className="form-input" style={{ paddingLeft: '3rem' }} placeholder="Enter points" min={1} max={parseFloat((earn?.pending_earnings || 0) / (settings.ic_conversion_rate || 1))} required
+                  <input type="number" className="form-input" style={{ paddingLeft: '3rem' }} placeholder="Enter points (Min: 100)" min={100} max={parseFloat((earn?.summary?.pending_earnings || 0) / (settings.ic_conversion_rate || 1))} required
                     value={withdrawForm.amount} onChange={e => setWithdrawForm({ ...withdrawForm, amount: e.target.value })} />
                 </div>
                 {withdrawForm.amount && (
