@@ -105,6 +105,10 @@ export default function StudentDashboard() {
   const [commissions, setCommissions] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [bonusPage, setBonusPage] = useState(1);
+  const [bonusTotalPages, setBonusTotalPages] = useState(1);
+  const [withdrawPage, setWithdrawPage] = useState(1);
+  const [withdrawTotalPages, setWithdrawTotalPages] = useState(1);
   const [showCalendar, setShowCalendar] = useState(false);
 
   const [settings, setSettings] = useState({ ic_conversion_rate: '1.0' });
@@ -147,9 +151,9 @@ export default function StudentDashboard() {
         api.get('/commissions/summary'),
         api.get('/referrals/stats'),
         api.get('/referrals/tree'),
-        api.get('/commissions/withdrawals?limit=50'),
+        api.get(`/commissions/withdrawals?limit=5&page=${withdrawPage}`),
         api.get('/settings'),
-        api.get('/users/bonuses'),
+        api.get(`/users/bonuses?limit=5&page=${bonusPage}`),
         api.get('/users/profile'),
         api.get(`/commissions?page=${page}&limit=5`)
       ]);
@@ -159,8 +163,13 @@ export default function StudentDashboard() {
       setEarnings(earn.data.data);
       setReferralStats(refs.data.data);
       setReferralTree(tree.data.data);
+      
       setWithdrawals(withdrawalsRes.data.data || []);
+      if (withdrawalsRes.data.pagination?.totalPages) setWithdrawTotalPages(withdrawalsRes.data.pagination.totalPages);
+      
       setBonuses(bonusesRes.data.data || []);
+      if (bonusesRes.data.pagination?.totalPages) setBonusTotalPages(bonusesRes.data.pagination.totalPages);
+      
       setCommissions(commsRes.data.data || []);
       if (commsRes.data.pagination) {
         setTotalPages(Math.ceil(commsRes.data.pagination.total / commsRes.data.pagination.limit));
@@ -185,7 +194,7 @@ export default function StudentDashboard() {
     } finally {
       if (showLoading) setLoading(false);
     }
-  }, [active, page]); // Re-create if active tab or page changes
+  }, [active, page, bonusPage, withdrawPage]); // Re-create if active tab or page changes
 
   // Auto-refresh on tab change or window focus
   useEffect(() => {
@@ -719,6 +728,17 @@ export default function StudentDashboard() {
                           </tbody>
                         </table>
                       </div>
+                      {bonusTotalPages > 1 && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
+                          <button disabled={bonusPage === 1} onClick={() => setBonusPage(p => Math.max(1, p - 1))} className="btn-outline" style={{ padding: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <ChevronLeft size={16} />
+                          </button>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Page {bonusPage} of {bonusTotalPages}</span>
+                          <button disabled={bonusPage === bonusTotalPages} onClick={() => setBonusPage(p => Math.min(bonusTotalPages, p + 1))} className="btn-outline" style={{ padding: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <ChevronRight size={16} />
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     <div style={{ marginTop: '2.5rem' }}>
@@ -754,6 +774,17 @@ export default function StudentDashboard() {
                           </tbody>
                         </table>
                       </div>
+                      {withdrawTotalPages > 1 && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
+                          <button disabled={withdrawPage === 1} onClick={() => setWithdrawPage(p => Math.max(1, p - 1))} className="btn-outline" style={{ padding: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <ChevronLeft size={16} />
+                          </button>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '600' }}>Page {withdrawPage} of {withdrawTotalPages}</span>
+                          <button disabled={withdrawPage === withdrawTotalPages} onClick={() => setWithdrawPage(p => Math.min(withdrawTotalPages, p + 1))} className="btn-outline" style={{ padding: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <ChevronRight size={16} />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </motion.div>
