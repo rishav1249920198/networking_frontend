@@ -911,6 +911,18 @@ export default function StudentDashboard() {
             </div>
             <form onSubmit={async (e) => {
               e.preventDefault();
+              const icAmount = parseFloat(withdrawForm.amount);
+              const maxAmount = parseFloat((earn?.summary?.pending_earnings || 0) / (settings.ic_conversion_rate || 1));
+              
+              if (icAmount < 100) {
+                toast.error('Minimum withdrawal amount is 100 IC.');
+                return;
+              }
+              if (icAmount > maxAmount) {
+                toast.error(`You only have ${maxAmount.toLocaleString()} IC available to withdraw.`);
+                return;
+              }
+
               setWithdrawLoading(true);
               try {
                 await api.post('/commissions/withdraw', withdrawForm);
@@ -932,7 +944,7 @@ export default function StudentDashboard() {
                   <div style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }}>
                     <ICIcon size={18} />
                   </div>
-                  <input type="number" className="form-input" style={{ paddingLeft: '3rem' }} placeholder="Enter points (Min: 100)" min={100} max={parseFloat((earn?.summary?.pending_earnings || 0) / (settings.ic_conversion_rate || 1))} required
+                  <input type="number" className="form-input" style={{ paddingLeft: '3rem' }} placeholder="Enter points (Min: 100)" required
                     value={withdrawForm.amount} onChange={e => setWithdrawForm({ ...withdrawForm, amount: e.target.value })} />
                 </div>
                 {withdrawForm.amount && (
