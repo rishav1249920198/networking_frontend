@@ -912,7 +912,7 @@ export default function StudentDashboard() {
             <form onSubmit={async (e) => {
               e.preventDefault();
               const icAmount = parseFloat(withdrawForm.amount);
-              const maxAmount = parseFloat((earn?.summary?.pending_earnings || 0) / (settings.ic_conversion_rate || 1));
+              const maxAmount = parseFloat((earnings?.summary?.pending_earnings || 0) / (settings.ic_conversion_rate || 1));
               
               if (icAmount < 100) {
                 toast.error('Minimum withdrawal amount is 100 IC.');
