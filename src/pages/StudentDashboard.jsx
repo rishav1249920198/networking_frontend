@@ -222,7 +222,7 @@ export default function StudentDashboard() {
   const stat = data?.referrals || {};
   const earn = data?.earnings || {};
 
-  const conversionRate = stats?.total_referrals > 0 ? Math.round(((stats.total_leads || 0) / stats.total_referrals) * 100) : 0;
+  const conversionRate = stats?.total_referrals > 0 ? Math.round(((stats.total_admissions || 0) / stats.total_referrals) * 100) : 0;
   const funnelData = [
     { name: 'Total Referrals', value: stats?.total_referrals || 0, fill: '#6366f1' },
     { name: 'Pending Leads', value: stats?.total_leads || 0, fill: '#f59e0b' },
