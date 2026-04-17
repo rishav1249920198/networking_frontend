@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  RadialBarChart, RadialBar, Legend
+  LineChart, Line, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import {
   Users, TrendingUp, DollarSign, Clock, LogOut, Monitor, LayoutDashboard,
@@ -225,8 +224,9 @@ export default function StudentDashboard() {
 
   const conversionRate = stats?.total_referrals > 0 ? Math.round(((stats.total_leads || 0) / stats.total_referrals) * 100) : 0;
   const funnelData = [
-    { name: 'Pending', count: stats?.total_leads || 0, fill: '#f59e0b' },
-    { name: 'Total Referrals', count: stats?.total_referrals || 0, fill: '#00B4D8' }
+    { name: 'Total Referrals', value: stats?.total_referrals || 0, fill: '#6366f1' },
+    { name: 'Pending Leads', value: stats?.total_leads || 0, fill: '#f59e0b' },
+    { name: 'Approved', value: stats?.total_admissions || 0, fill: '#10b981' },
   ];
 
   return (
@@ -331,15 +331,24 @@ export default function StudentDashboard() {
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
                       style={{ background: 'var(--bg-card)', borderRadius: '16px', padding: '1.5rem', border: '1px solid var(--border)', minWidth: 0, overflow: 'hidden' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                        <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.95rem' }}>Conversion Funnel</h3>
-                        <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: '800' }}>{conversionRate}% Win Rate</span>
+                        <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.95rem' }}>Referral Funnel</h3>
+                        <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: '800' }}>{conversionRate}% Conversion</span>
                       </div>
                       <ResponsiveContainer width="100%" height={220}>
-                        <RadialBarChart cx="40%" cy="50%" innerRadius="30%" outerRadius="100%" barSize={12} data={funnelData} startAngle={90} endAngle={-270}>
-                          <RadialBar minAngle={15} background clockWise dataKey="count" cornerRadius={10} />
-                          <Tooltip itemStyle={{ color: 'var(--text-primary)', fontWeight: 'bold' }} contentStyle={{ borderRadius: '10px' }} />
-                          <Legend iconSize={10} layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }} />
-                        </RadialBarChart>
+                        <BarChart data={funnelData} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                          <XAxis type="number" tick={{ fontSize: 10, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} />
+                          <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: 'var(--text-secondary)', fontWeight: 600 }} axisLine={false} tickLine={false} width={100} />
+                          <Tooltip
+                            contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '10px', fontSize: '0.8rem', color: 'var(--text-primary)' }}
+                            itemStyle={{ color: 'var(--text-primary)' }}
+                            labelStyle={{ color: 'var(--text-secondary)', fontWeight: 700 }}
+                          />
+                          <Bar dataKey="value" name="Count" radius={[0, 8, 8, 0]} maxBarSize={22}>
+                            {funnelData.map((entry, idx) => (
+                              <Cell key={idx} fill={entry.fill} />
+                            ))}
+                          </Bar>
+                        </BarChart>
                       </ResponsiveContainer>
                     </motion.div>
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
@@ -351,9 +360,8 @@ export default function StudentDashboard() {
                       <ResponsiveContainer width="100%" height={200}>
                         <LineChart data={earnings?.monthly || []}>
                           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                          <XAxis dataKey="month" tick={{ fontSize: 9, fill: '#94a3b8' }} />
-                          <YAxis tick={{ fontSize: 9, fill: '#94a3b8' }} />
-                          <YAxis tick={{ fontSize: 9, fill: '#94a3b8' }} />
+                          <XAxis dataKey="month" tick={{ fontSize: 9, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fontSize: 9, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} />
                           <Tooltip content={(props) => {
                             if (props.active && props.payload && props.payload.length) {
                               return (

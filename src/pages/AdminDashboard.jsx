@@ -416,9 +416,14 @@ export default function AdminDashboard() {
                             <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
                           </linearGradient>
                         </defs>
-                        <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v}`} />
-                        <Tooltip formatter={(value) => `₹${parseFloat(value).toLocaleString()}`} contentStyle={{ borderRadius: '10px', border: '1px solid var(--border)', fontSize: '0.8rem', background: 'var(--bg-card)', color: 'var(--text-primary)' }} />
+                        <XAxis dataKey="month" tick={{ fontSize: 10, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fontSize: 10, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v}`} />
+                        <Tooltip
+                          formatter={(value) => `₹${parseFloat(value).toLocaleString()}`}
+                          contentStyle={{ borderRadius: '10px', border: '1px solid var(--border)', fontSize: '0.8rem', background: 'var(--bg-card)', color: 'var(--text-primary)' }}
+                          itemStyle={{ color: 'var(--text-primary)' }}
+                          labelStyle={{ color: 'var(--text-secondary)', fontWeight: 700 }}
+                        />
                         <Area type="monotone" dataKey="revenue_collected" name="Gross Revenue" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRev)" />
                         <Area type="monotone" dataKey="commission_paid" name="Commission Paid" stroke="#f59e0b" strokeWidth={2.5} fillOpacity={1} fill="url(#colorComm)" />
                       </AreaChart>
@@ -439,9 +444,13 @@ export default function AdminDashboard() {
                             <stop offset="100%" stopColor="#6366f1" stopOpacity={0.6}/>
                           </linearGradient>
                         </defs>
-                        <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#94a3b8', angle: -30, textAnchor: 'end' }} axisLine={false} tickLine={false} interval={0} />
-                        <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} allowDecimals={false} />
-                        <Tooltip contentStyle={{ borderRadius: '10px', border: '1px solid var(--border)', fontSize: '0.8rem', background: 'var(--bg-card)', color: 'var(--text-primary)' }} />
+                        <XAxis dataKey="name" tick={{ fontSize: 9, fill: 'var(--text-secondary)', angle: -30, textAnchor: 'end' }} axisLine={false} tickLine={false} interval={0} />
+                        <YAxis tick={{ fontSize: 10, fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                        <Tooltip
+                          contentStyle={{ borderRadius: '10px', border: '1px solid var(--border)', fontSize: '0.8rem', background: 'var(--bg-card)', color: 'var(--text-primary)' }}
+                          itemStyle={{ color: 'var(--text-primary)' }}
+                          labelStyle={{ color: 'var(--text-secondary)', fontWeight: 700 }}
+                        />
                         <Bar dataKey="count" name="Enrollments" fill="url(#barGrad)" radius={[6, 6, 0, 0]} maxBarSize={40} />
                       </BarChart>
                     </ResponsiveContainer>
