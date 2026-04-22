@@ -1,0 +1,23 @@
+🚀 Instant Signup Bonus:
+
+Jab bhi koi naya student join karega, use turant 50 IC Welcome Bonus milega.
+Agar wo kisi ke referral link se aaya hai, toh use extra points milenge. Isse registration conversion badhega.
+📅 Daily Check-in System:
+
+Student Dashboard ke top bar mein ek naya "✨ Daily Check-in" button hai.
+Roz login karke click karne par student ko 10 IC reward milega.
+🏆 Level-Up Commissions (Milestones):
+
+Ab jitne zyada admissions student karwayega, uska commission rate utna hi upar jayega:
+Standard: 3.0% (0-5 Adm)
+Silver: 3.10% (6-10 Adm)
+Gold: 3.20% (11-15 Adm)
+Platinum: 3.35% (16+ Adm)
+Student apne Earnings tab mein apna current "Tier" dekh sakta hai.
+👤 Profile Completion Reward:
+
+Sidebar mein ek naya "My Profile" tab hai.
+Apni Details (Education, Address, Bio) pura karne par student ko 100 IC one-time bonus milega.
+📊 Unified Earnings:
+
+Dashboard Stats aur Leaderboard ab Automatic hai—isne Commissions aur sabhi Chote-mote Bonuses ko merge kar diya hai.
