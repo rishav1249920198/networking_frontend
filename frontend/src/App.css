@@ -1,0 +1,8 @@
+/* Reset Vite defaults — let index.css handle everything */
+#root {
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
