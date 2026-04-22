@@ -1,3 +1,8 @@
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
+import api from '../../api/client';
+import UnifiedIcon from '../UnifiedIcon';
 import { useTheme } from '../../context/ThemeContext';
 
 const SettingsPanel = ({ activeTab: initialTab = 'security' }) => {
