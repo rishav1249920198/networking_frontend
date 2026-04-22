@@ -1,0 +1,8 @@
+{
+  "name": "networking-monorepo",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "npm --prefix frontend install && npm --prefix frontend run build",
+    "install-all": "npm --prefix frontend install && npm --prefix backend install"
+  }
+}
