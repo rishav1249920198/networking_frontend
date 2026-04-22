@@ -168,33 +168,36 @@ export default function StudentDashboard() {
     if (showLoading) setLoading(true);
     setError(null);
     try {
-      const [dashRes, withdrawRes, earnHistoryRes, profileRes] = await Promise.all([
+      const [dashRes, withdrawRes, earnHistoryRes, profileRes] = await Promise.allSettled([
         api.get('/dashboard/student'),
         api.get(`/commissions/withdrawals?limit=10&page=${withdrawPage}`),
         api.get(`/dashboard/earnings/history?limit=10&page=${earningsPage}`),
         api.get('/users/profile')
       ]);
 
-      if (dashRes.data.success) {
-        setDashboard(dashRes.data.data.stats);
-        setEarningsData(dashRes.data.data.breakdown);
-        setChartData(dashRes.data.data.chart);
-        setRecentAdmissions(dashRes.data.data.recentAdmissions);
-        setReferralTree(dashRes.data.data.tree);
-      }
-      
-      if (withdrawRes.data.success) {
-        setWithdrawHistory(withdrawRes.data.data);
-        setWithdrawTotalPages(withdrawRes.data.pagination.totalPages);
+      if (dashRes.status === 'fulfilled' && dashRes.value.data.success) {
+        setDashboard(dashRes.value.data.data.stats);
+        setEarningsData(dashRes.value.data.data.breakdown);
+        setChartData(dashRes.value.data.data.chart);
+        setRecentAdmissions(dashRes.value.data.data.recentAdmissions);
+        setReferralTree(dashRes.value.data.data.tree);
+      } else if (dashRes.status === 'rejected') {
+        console.error('Dashboard Fetch Failure:', dashRes.reason);
+        setError('Dashboard unavailable. Please check your connection.');
       }
 
-      if (earnHistoryRes.data.success) {
-        setEarningsHistory(earnHistoryRes.data.data);
-        setEarningsTotalPages(earnHistoryRes.data.pagination.totalPages);
+      if (withdrawRes.status === 'fulfilled' && withdrawRes.value.data.success) {
+        setWithdrawHistory(withdrawRes.value.data.data);
+        setWithdrawTotalPages(withdrawRes.value.data.pagination.totalPages);
       }
-      
-      if (profileRes.data.success) {
-        setProfileForm(profileRes.data.data);
+
+      if (earnHistoryRes.status === 'fulfilled' && earnHistoryRes.value.data.success) {
+        setEarningsHistory(earnHistoryRes.value.data.data);
+        setEarningsTotalPages(earnHistoryRes.value.data.pagination.totalPages);
+      }
+
+      if (profileRes.status === 'fulfilled' && profileRes.value.data.success) {
+        setProfileForm(profileRes.value.data.data);
       }
     } catch (err) {
       console.error('Dashboard Fetch Failure:', err);
