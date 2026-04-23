@@ -34,7 +34,7 @@ export default function AdminDashboard() {
   const loadData = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true);
     try {
-      const [resStats, resMetrics, resForecast, resAdm, resUsers, resWith, resSett] = await Promise.all([
+      const [resStats, resMetrics, resForecast, resAdm, resUsers, resWith, resSett] = await Promise.allSettled([
         api.get('/admin/stats'),
         api.get('/admin/metrics/expense'),
         api.get('/admin/insights/forecast'),
@@ -44,15 +44,26 @@ export default function AdminDashboard() {
         api.get('/settings')
       ]);
 
-      setStats(resStats.data.data);
+      if (resStats.status === 'fulfilled') setStats(resStats.value.data.data || {});
+      else console.warn('Admin stats failed:', resStats.reason?.response?.data?.message);
+
       setIntelligence({
-        metrics: resMetrics.data.data || {},
-        insights: resForecast.data.data || {}
+        metrics: resMetrics.status === 'fulfilled' ? (resMetrics.value.data.data || {}) : {},
+        insights: resForecast.status === 'fulfilled' ? (resForecast.value.data.data || {}) : {}
       });
-      setAdmissions(resAdm.data.data || []);
-      setUsers(resUsers.data.data || []);
-      setWithdrawals(resWith.data.data || []);
-      setSettings(resSett.data.data || {});
+
+      if (resAdm.status === 'fulfilled') setAdmissions(resAdm.value.data.data || []);
+      else console.warn('Admissions failed:', resAdm.reason?.response?.data?.message);
+
+      if (resUsers.status === 'fulfilled') setUsers(resUsers.value.data.data || []);
+      else console.warn('Users failed:', resUsers.reason?.response?.data?.message);
+
+      if (resWith.status === 'fulfilled') setWithdrawals(resWith.value.data.data || []);
+      else console.warn('Withdrawals failed:', resWith.reason?.response?.data?.message);
+
+      if (resSett.status === 'fulfilled') setSettings(resSett.value.data.data || {});
+      else console.warn('Settings failed:', resSett.reason?.response?.data?.message);
+
     } catch (err) {
       toast.error('Failed to sync admin data.');
     } finally {
