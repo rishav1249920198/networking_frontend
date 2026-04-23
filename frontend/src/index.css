@@ -653,3 +653,17 @@ img, svg, canvas, video {
   }
 }
 
+
+/* ============================
+   Bottom Navigation (Mobile Only)
+   ============================ */
+.bottom-nav {
+  display: grid;
+}
+
+@media (min-width: 1024px) {
+  .bottom-nav {
+    display: none !important;
+  }
+}
+
